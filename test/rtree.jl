@@ -11,47 +11,97 @@
 end
 
 @testset "Basic Operations" begin
-    ambr = SI.Rect((0.0, 0.0), (0.0, 0.0))
-    bmbr = SI.Rect((0.0, 1.0), (0.0, 1.0))
-    tree = RTree{Float64, 2}(Int, Int)
+    tree_vars = [SI.RTreeStar, SI.RTreeLinear, SI.RTreeQuadratic]
+    @testset "RTree{Float,2,Int32,Int}(variant=$tree_var)" for tree_var in tree_vars
+        ambr = SI.Rect((0.0, 0.0), (0.0, 0.0))
+        bmbr = SI.Rect((0.0, 1.0), (0.0, 1.0))
 
-    @test tree isa RTree{Float64, 2, SpatialElem{Float64, 2, Int, Int}}
-    @test SI.variant(tree) === SI.RTreeStar
-    @test eltype(tree) === SpatialElem{Float64, 2, Int, Int}
-    @test SI.regiontype(tree) === SI.Rect{Float64, 2}
-    @test SI.dimtype(tree) === Float64
-    @test ndims(tree) === 2
-    @test length(tree) == 0
-    @test SI.height(tree) == 1
-    @test isempty(tree)
-    @test isempty(tree, ambr)
-    @test isequal(SI.mbr(tree.root), SI.empty(SI.regiontype(tree)))
-    @test SI.check(tree)
-    @test_throws KeyError delete!(tree, SI.empty(SI.regiontype(tree)), 1)
-    @test SI.check(tree)
+        tree = RTree{Float64, 2}(Int32, Int, variant=tree_var)
+        @test tree isa RTree{Float64, 2, SpatialElem{Float64, 2, Int32, Int}}
+        @test SI.variant(tree) === tree_var
 
-    @test insert!(tree, ambr, 1, 2) === tree
-    @test length(tree) == 1
-    @test !isempty(tree)
-    @test !isempty(tree, ambr)
-    @test SI.height(tree) == 1
-    @test isequal(SI.mbr(tree.root), ambr)
-    @test SI.check(tree)
-    @test_throws KeyError delete!(tree, bmbr, 1)
-    @test_throws KeyError delete!(tree, ambr, 2)
-    @test SI.check(tree)
+        @test eltype(tree) === SpatialElem{Float64, 2, Int32, Int}
+        @test SI.regiontype(tree) === SI.Rect{Float64, 2}
+        @test SI.dimtype(tree) === Float64
+        @test ndims(tree) === 2
+        @test length(tree) == 0
+        @test SI.height(tree) == 1
+        @test isempty(tree)
+        @test isempty(tree, ambr)
+        @test isequal(SI.mbr(tree.root), SI.empty(SI.regiontype(tree)))
+        @test SI.check(tree)
+        @test_throws KeyError delete!(tree, SI.empty(SI.regiontype(tree)), 1)
+        @test SI.check(tree)
 
-    @test insert!(tree, bmbr, 2, 2) === tree
-    @test length(tree) == 2
-    @test SI.height(tree) == 1
-    @test isequal(SI.mbr(tree.root), SI.combine(ambr, bmbr))
-    @test SI.check(tree)
-    @test_throws KeyError delete!(tree, bmbr, 1)
-    @test_throws KeyError delete!(tree, ambr, 2)
-    @test_throws KeyError delete!(tree, SI.empty(SI.regiontype(tree)), 1)
-    @test delete!(tree, ambr, 1) === tree
-    @test length(tree) == 1
-    @test SI.check(tree)
+        @test insert!(tree, ambr, 1, 2) === tree
+        @test length(tree) == 1
+        @test !isempty(tree)
+        @test !isempty(tree, ambr)
+        @test SI.height(tree) == 1
+        @test isequal(SI.mbr(tree.root), ambr)
+        @test SI.check(tree)
+        @test_throws KeyError delete!(tree, bmbr, 1)
+        @test_throws KeyError delete!(tree, ambr, 2)
+        @test SI.check(tree)
+
+        @test insert!(tree, bmbr, 2, 2) === tree
+        @test length(tree) == 2
+        @test SI.height(tree) == 1
+        @test isequal(SI.mbr(tree.root), SI.combine(ambr, bmbr))
+        @test SI.check(tree)
+        @test_throws KeyError delete!(tree, bmbr, 1)
+        @test_throws KeyError delete!(tree, ambr, 2)
+        @test_throws KeyError delete!(tree, SI.empty(SI.regiontype(tree)), 1)
+        @test delete!(tree, ambr, 1) === tree
+        @test length(tree) == 1
+        @test SI.check(tree)
+    end
+
+    @testset "RTree{Int,3,String,Nothing}(variant=$tree_var) (no id)" for tree_var in tree_vars
+        ambr = SI.Rect((0, 0, 0), (0, 0, 0))
+        bmbr = SI.Rect((0, 1, 1), (0, 1, 1))
+        tree = RTree{Int, 3}(String, variant=tree_var)
+        @test tree isa RTree{Int, 3, SpatialElem{Int, 3, Nothing, String}}
+        @test SI.variant(tree) === tree_var
+        @test eltype(tree) === SpatialElem{Int, 3, Nothing, String}
+        @test SI.regiontype(tree) === SI.Rect{Int, 3}
+        @test SI.dimtype(tree) === Int
+        @test ndims(tree) === 3
+        @test length(tree) == 0
+        @test SI.height(tree) == 1
+        @test isempty(tree)
+        @test isempty(tree, ambr)
+        @test isequal(SI.mbr(tree.root), SI.empty(SI.regiontype(tree)))
+        @test SI.check(tree)
+        @test_throws KeyError delete!(tree, SI.empty(SI.regiontype(tree)), 1)
+        @test_throws KeyError delete!(tree, SI.empty(SI.regiontype(tree)))
+        @test SI.check(tree)
+
+        @test_throws MethodError insert!(tree, ambr, 1, "2")
+        @test insert!(tree, ambr, "2") === tree
+        @test length(tree) == 1
+        @test !isempty(tree)
+        @test !isempty(tree, ambr)
+        @test SI.height(tree) == 1
+        @test isequal(SI.mbr(tree.root), ambr)
+        @test SI.check(tree)
+        @test_throws MethodError delete!(tree, bmbr, 1)
+        @test_throws KeyError delete!(tree, bmbr)
+        @test SI.check(tree)
+
+        @test insert!(tree, bmbr, "3") === tree
+        @test length(tree) == 2
+        @test SI.height(tree) == 1
+        @test isequal(SI.mbr(tree.root), SI.combine(ambr, bmbr))
+        @test SI.check(tree)
+        @test_throws MethodError delete!(tree, bmbr, 1)
+        @test_throws MethodError delete!(tree, SI.empty(SI.Rect{Int, 2}))
+        @test_throws MethodError delete!(tree, SI.empty(SI.Rect{Float64, 3}))
+        @test_throws KeyError delete!(tree, SI.empty(SI.regiontype(tree)))
+        @test delete!(tree, bmbr) === tree
+        @test length(tree) == 1
+        @test SI.check(tree)
+    end
 end
 
 @testset "1000 vertices" begin
@@ -94,7 +144,8 @@ end
     end
 
     @testset "bulk load" begin
-        tree = RTree{SI.dimtype(eltype(mbrs)), ndims(eltype(mbrs))}(Int, String, leaf_capacity = 20, branch_capacity = 20)
+        tree = RTree{SI.dimtype(eltype(mbrs)), ndims(eltype(mbrs))}(Int, String,
+                                leaf_capacity = 20, branch_capacity = 20)
         @test tree === SI.load!(tree, enumerate(mbrs), method=:OMT,
                                 getid = x -> x[1], getmbr = x -> x[2], getval = x -> string(x[1]))
         @test SI.check(tree)

@@ -125,6 +125,9 @@ mutable struct RTree{T,N,V} <: SpatialIndex{T,N,V}
     end
 end
 
+RTree{T,N}(::Type{V}; kwargs...) where {T,N,V} =
+    RTree{T,N,SpatialElem{T,N,Nothing,V}}(; kwargs...)
+
 RTree{T,N}(::Type{K}, ::Type{V}; kwargs...) where {T,N,K,V} =
     RTree{T,N,SpatialElem{T,N,K,V}}(; kwargs...)
 
