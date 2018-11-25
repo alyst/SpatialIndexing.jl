@@ -1,9 +1,10 @@
 """
-    insert!(tree::RTree, key, pt::Point, val)
-    insert!(tree::RTree, key, br::Rect, val)
+    insert!(tree::RTree, pt::Point, [id], val)
+    insert!(tree::RTree, br::Rect, [id], val)
     insert!(tree::RTree, elem::SpatialElem)
 
-Inserts `val` value identified by `key` and `br` bounding box (or point `pt`) into the `tree`.
+Inserts `val` value identified by `br` bounding box (or point `pt`) and
+`id` (if tree elememnts support `HasID` trait) into the `tree`.
 """
 function Base.insert!(tree::RTree, el::Any)
     check_eltype_rtree(el, tree)
@@ -13,16 +14,16 @@ function Base.insert!(tree::RTree, el::Any)
     return tree
 end
 
-Base.insert!(tree::RTree{T,N,SpatialElem{T,N,K,V}}, br::Rect{T,N}, key::Any, val::Any) where {T,N,K,V} =
-    insert!(tree, SpatialElem{T,N,K,V}(br, key, val))
+Base.insert!(tree::RTree{T,N,SpatialElem{T,N,K,V}}, br::Rect{T,N}, id::Any, val::Any) where {T,N,K,V} =
+    insert!(tree, SpatialElem{T,N,K,V}(br, id, val))
 
 Base.insert!(tree::RTree{T,N,SpatialElem{T,N,K,V}},
-             pt::Point{T,N}, key::Any, val::Any) where {T,N,K,V} =
-    insert!(tree, SpatialElem{T,N,K,V}(Rect(pt), key, val))
+             pt::Point{T,N}, id::Any, val::Any) where {T,N,K,V} =
+    insert!(tree, SpatialElem{T,N,K,V}(Rect(pt), id, val))
 
 Base.insert!(tree::RTree{T,N,SpatialElem{T,N,Nothing,V}},
              br::Union{Rect{T,N}, Point{T,N}}, val::Any) where {T,N,V} =
-    insert!(tree, nothing, br, val)
+    insert!(tree, br, nothing, val)
 
 # inserts the child into the node rebalancing R-tree as needed
 # returns true if MBR was changed and upstream R-tree readjustments are required

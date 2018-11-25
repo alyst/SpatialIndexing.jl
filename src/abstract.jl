@@ -10,6 +10,10 @@ function Base.showerror(io::IO, err::SpatialIndexException)
     print(io, err.msg)
 end
 
+# throws KeyError with or without id (depending on eltype HasID trait)
+__spatial_keyerror(eltype::Type, br::Region, id::Any = nothing) =
+    idtrait(eltype) === HasNoID ? throw(KeyError(br)) : throw(KeyError((br, id)))
+
 @enum QueryType::Int QueryContainedIn QueryIntersectsWith QueryPoint QueryNearestNeighbours
 
 """
@@ -75,8 +79,8 @@ function check_hasid(::Type{K}, ::Type{V}) where {K, V}
 end
 
 """
-Generic implementation of spatial data element that supports
-`HasID` and `HasMBR` traits and stores values of type `V`
+Simple `N`-dimensional spatial data element that stores values of type `V`
+and supports `HasMBR` and `HasID{K}` (if `K` is not `Nothing`) traits.
 """
 struct SpatialElem{T,N,K,V}
     mbr::Rect{T,N}

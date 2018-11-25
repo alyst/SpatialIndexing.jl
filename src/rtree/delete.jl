@@ -1,13 +1,13 @@
 """
-    delete!(tree::RTree, key, pt::Point)
-    delete!(tree::RTree, key, br::Rect)
+    delete!(tree::RTree, pt::Point, [id])
+    delete!(tree::RTree, br::Rect, [id])
 
-Deletes the value identified by `key` and `br` bounding box (or point `pt`)
-into the `tree`.
+Deletes the value identified by `br` bounding box (or point `pt`) and
+the `id` (if tree elements support `HasID` trait) from the `tree`.
 """
-function Base.delete!(tree::RTree{T,N}, br::Rect{T,N}, key::Any) where {T,N}
-    leafx = findleaf(tree.root, br, key)
-    leafx === nothing && throw(KeyError((br, key)))
+function Base.delete!(tree::RTree{T,N}, br::Rect{T,N}, id::Any = nothing) where {T,N}
+    leafx = findleaf(tree, br, id)
+    leafx === nothing && __spatial_keyerror(eltype(tree), br, id)
     _detach!(leafx[1], leafx[2], tree)
     tmpdetached = Vector{nodetype(tree)}() # FIXME Union{Leaf,Branch} ?
     _condense!(leafx[1], tree, tmpdetached)
@@ -17,8 +17,8 @@ function Base.delete!(tree::RTree{T,N}, br::Rect{T,N}, key::Any) where {T,N}
     return tree
 end
 
-Base.delete!(tree::RTree{T,N}, pt::Point{T,N}, key::Any) where {T,N} =
-    delete!(tree, Rect(pt), key)
+Base.delete!(tree::RTree{T,N}, pt::Point{T,N}, id::Any = nothing) where {T,N} =
+    delete!(tree, Rect(pt), id)
 
 # deletes the subtree with the `node` root from the `tree`
 # (does not update the parent MBR)
@@ -54,6 +54,8 @@ end
 
 # FIXME replace `region` with a more generic `filter`
 """
+    subtract!(tree::RTree, reg::Region)
+
 Subtracts the `region` from the `tree`, i.e. removes all elements within
 `region`.
 """
@@ -63,13 +65,11 @@ function subtract!(tree::RTree{T,N}, reg::Region{T,N}) where {T,N}
 
     tmpdetached = Vector{nodetype(tree)}()
     status = _subtract!(tree.root, 0, reg, tree, tmpdetached)
-    @info "_subtract!(root) done"
-    @show status
-    @show typeof(tmpdetached) length(tmpdetached)
     @info "subtract!(): status=$(status) tmpdetached=$(length(tmpdetached))"
     if status == 1 # tree changed, but not removed
         _condense!(tree.root, tree, tmpdetached) # try to condense the root
-    elseif status == 2 # whole tree removed
+    elseif status == 2 # whole tree removed (contained in reg)
+        # should have no items and nothing to reinsert
         @assert isempty(tree)
         @assert isempty(tmpdetached)
     end
@@ -81,11 +81,10 @@ function _subtract!(node::Node, node_ix::Int, reg::Region, tree::RTree,
                     tmpdetached::AbstractVector{<:Node})
     nodembr = mbr(node)
     @info "_subtract!(): lev=$(level(node)) i=$node_ix len=$(length(node))"
-    # FIXME juxtaposition() method that combines in() and intersects()?
+    # TODO juxtaposition() method that combines in() and intersects()?
     if in(nodembr, reg)
-        @info "_subtract!(): delete subtree lev=$(level(node)) i=$node_ix len=$(length(node))"
+        @debug "_subtract!(): delete subtree lev=$(level(node)) i=$node_ix len=$(length(node))"
         delete_subtree!(tree, node)
-        @info "_subtract!(): delete subtree done lev=$(level(node)) i=$node_ix len=$(length(node)), returning 1"
         return 2 # node removed
     elseif intersects(nodembr, reg)
         mbr_dirty = false
@@ -99,7 +98,7 @@ function _subtract!(node::Node, node_ix::Int, reg::Region, tree::RTree,
             else
                 @assert node isa Leaf
                 if in(oldmbr, reg)
-                    @info "_subtract!(): detach elem lev=$(level(node)) i=$i len=$(length(node))"
+                    @debug "_subtract!(): detach elem lev=$(level(node)) i=$i len=$(length(node))"
                     _detach!(node, i, tree, updatembr = false) # don't update MBR, we do it later
                     tree.nelems -= 1
                     tree.nelem_deletions += 1

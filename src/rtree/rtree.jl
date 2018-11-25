@@ -70,7 +70,7 @@ the specific spatial region grows linearly with the capacity.
 
 # References
 [guttman84] “R-Trees: A Dynamic Index Structure for Spatial Searching”
-    Antonin Guttman, Proc. 1984 ACM-SIGMOD Conference on Management of
+    A. Guttman, Proc. 1984 ACM-SIGMOD Conference on Management of
     Data (1985), 47-57.
 [beckmann90] "The R*-tree: an efficient and robust access method for points and rectangles"
     N. Beckmann, H.P. Kriegel, R. Schneider, B. Seeger, Proc. 1990 ACM SIGMOD

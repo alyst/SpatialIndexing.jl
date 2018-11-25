@@ -34,13 +34,14 @@ check_eltype_rtree_eltype(el::Any, node::Node) =
     check_eltype_rtree(typeof(el), typeof(node))
 
 # equality check for R-tree elements (by MBR and, optionally, ID)
-isequal_rtree(el::Any, reg::Region, id::Any) =
+isequal_rtree(el::Any, reg::Region, id::Any = nothing) =
     isequal_rtree(idtrait(typeof(el)), el, reg, id)
 
 isequal_rtree(::Type{<:HasID}, el::Any, reg::Region, key::Any) =
-    isequal(id(el), key) && (mbr(el) == reg)
+    isequal(id(el), convert(idtype(idtrait(typeof(el))), key)) && (mbr(el) == reg)
 
-isequal_rtree(::Type{HasNoID}, el::Any, reg::Region, key::Nothing) = (mbr(el) == reg)
+isequal_rtree(::Type{HasNoID}, el::Any, reg::Region, ::Nothing = nothing) =
+    (mbr(el) == reg)
 
 """
 R-Tree leaf (level 0 node).

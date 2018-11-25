@@ -27,6 +27,13 @@ function check(node::Node{T,N,V}, tree::RTree{T,N,V},
     return true
 end
 
+# check the tree:
+# * the parent
+# * the height
+# * the number of elements
+# * the number of nodes per level
+# * element id uniqueness
+# * MBRs of the nodes
 function check(tree::RTree)
     tree.root.parent === nothing ||
         throw(SpatialIndexException("RTree: root has a parent"))

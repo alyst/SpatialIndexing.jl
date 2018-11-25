@@ -35,9 +35,7 @@ open(joinpath(@__DIR__, "spiral_rtree_seq.html"), "w") do io
 end
 
 using ORCA
-open(joinpath(@__DIR__, "spiral_rtree_seq.html"), "w") do io
-    PlotlyJS.savehtml(io, seq_tree_plot, :embed)
-end
+savefig(seq_tree_plot, joinpath(@__DIR__, "spiral_rtree_seq.png"), width=1000, height=800)
 
 bulk_tree_plot = plot(bulk_tree);
 open(joinpath(@__DIR__, "spiral_rtree_bulk.html"), "w") do io
