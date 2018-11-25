@@ -27,7 +27,7 @@ end
     @test SI.Rect((1.0, 2.0, 3.0), (2, 3, 4)) isa SI.Rect{Float64, 3}
     @test SI.Rect{Float64, 3}((1, 2, 3), (2, 3, 4)) isa SI.Rect{Float64, 3}
     @test isequal(SI.empty(SI.Rect{Float64, 2}), SI.Rect((NaN, NaN), (NaN, NaN)))
-    @test isequal(SI.empty(SI.Rect{Int, 1}), SI.Rect((0,), (0,)))
+    @test isequal(SI.empty(SI.Rect{Int, 1}), SI.Rect((typemax(Int),), (typemax(Int),)))
     @test SI.isvalid(SI.Rect((1, 2), (2, 3)))
     @test SI.isvalid(SI.Rect((1.0, 2.0), (2.0, 3.0)))
     @test SI.isvalid(SI.Rect((1.0, 2.0), (Inf, Inf)))

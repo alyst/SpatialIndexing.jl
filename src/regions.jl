@@ -66,7 +66,7 @@ Rect(pt::Point) = Rect(pt.coord, pt.coord)
 empty(::Type{Rect{T,N}}) where {T,N} =
     Rect{T,N}(ntuple(_ -> convert(T, NaN), N), ntuple(_ -> convert(T, NaN), N))
 empty(::Type{Rect{T,N}}) where {T<:Integer,N} =
-    Rect{T,N}(ntuple(_ -> zero(T), N), ntuple(_ -> zero(T), N))
+    Rect{T,N}(ntuple(_ -> typemax(T), N), ntuple(_ -> typemax(T), N))
 
 """
     combine(a::Region{T,N}, b::Region{T,N}) where {T,N}
