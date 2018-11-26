@@ -12,10 +12,9 @@ const LevelsPalette = Dict(
     6 => "#4169E1", # Royal blue
     7 => "#008080",) # Teal
 
-# create plotly trace for a single R-tree `node`
-function plotly_trace(node::SI.Node,
-                      ix::Union{Integer, Nothing};
-                      showlegend::Bool)
+# create plotly trace for a single R-tree `node` (rectangle edges)
+function node_trace(node::SI.Node, ix::Union{Integer, Nothing};
+                    showlegend::Bool)
     nbr = SI.mbr(node)
     res = scatter(x = [nbr.low[1], nbr.high[1], nbr.high[1], nbr.low[1], nbr.low[1]],
                   y = [nbr.low[2], nbr.low[2], nbr.high[2], nbr.high[2], nbr.low[2]],
@@ -31,35 +30,29 @@ end
 # create plotly traces for the nodes in a subtree with the `node` root
 # and append them to `node_traces`
 function append_subtree_traces!(node_traces::Vector{PlotlyBase.AbstractTrace},
-                                node::SI.Node,
-                                ix::Union{Integer, Nothing},
-                                elems_data::NamedTuple,
+                                node::SI.Node, ix::Union{Integer, Nothing},
                                 levels::Set{Int})
-    push!(node_traces, plotly_trace(node, ix, showlegend = SI.level(node) ∉ levels))
+    push!(node_traces, node_trace(node, ix, showlegend = SI.level(node) ∉ levels))
     push!(levels, SI.level(node)) # show each level once in legend
-    if node isa SI.Leaf
-        for (i, child) in enumerate(SI.children(node)) # elements are just points
-            push!(elems_data.id, SI.id(child))
-            push!(elems_data.x, SI.mbr(child).low[1])
-            push!(elems_data.y, SI.mbr(child).low[2])
-        end
-    else
+    if node isa SI.Branch
         for (i, child) in enumerate(SI.children(node))
-            append_subtree_traces!(node_traces, child, i, elems_data, levels)
+            append_subtree_traces!(node_traces, child, i, levels)
         end
     end
     return nothing
 end
+
+data_trace(tree::RTree) =
+    scatter(mode=:markers, name=:data, marker_color = "#333333", marker_size = 2,
+            x=[SI.center(SI.mbr(x)).coord[1] for x in tree],
+            y=[SI.center(SI.mbr(x)).coord[2] for x in tree],
+            text=["id=$(SI.id(x))" for x in tree], hoverinfo=:text)
 
 # create Plotly plot of the given tree
 function PlotlyJS.plot(tree::RTree)
     ndims(tree) == 1 && throw(ArgumentError("1-D R-trees not supported"))
     ndims(tree) > 2 && @warn("Only the 1st and 2nd dimensions would be shown for $(ndims(tree))-D trees")
     node_traces = Vector{PlotlyBase.AbstractTrace}()
-    elems_data = (id = Vector{SI.idtype(tree)}(), x = Vector{Float64}(), y = Vector{Float64}())
-    append_subtree_traces!(node_traces, tree.root, nothing, elems_data, Set{Int}())
-    elems_trace = scatter(mode=:markers, name=:data, marker_color = "#333333", marker_size = 2,
-                          x=elems_data.x, y=elems_data.y, text=["id=$id" for id in elems_data.id],
-                          hoverinfo=:text)
-    PlotlyJS.plot([node_traces; [elems_trace]], Layout(hovermode=:closest))
+    append_subtree_traces!(node_traces, tree.root, nothing, Set{Int}())
+    PlotlyJS.plot([node_traces; [data_trace(tree)]], Layout(hovermode=:closest))
 end
