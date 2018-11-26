@@ -135,6 +135,8 @@ center(a::Rect{T,N}) where {T,N} =
     end
 
 """
+    intersects(a::Region{T,N}, b::Region{T,N}) where {T,N}
+
 Check whether `a` intersects with `b`.
 """
 @generated intersects(a::Rect{T,N}, b::Rect{T,N}) where {T,N} =
@@ -143,7 +145,9 @@ Check whether `a` intersects with `b`.
     end
 
 """
-Check whether `b` is contained inside `a`.
+    contains(a::Region{T,N}, b::Region{T,N}) where {T,N}
+
+Check whether `a` contains `b`.
 """
 @generated contains(a::Rect{T,N}, b::Rect{T,N}) where {T,N} =
     quote
@@ -156,6 +160,8 @@ Check whether `b` is contained inside `a`.
     end
 
 """
+    in(a::Region{T,N}, b::Region{T,N}) where {T,N}
+
 Check whether `a` is contained inside `b`.
 """
 Base.in(a::Rect, b::Rect) = contains(b, a)
@@ -166,6 +172,8 @@ Base.:(==)(a::Point, b::Rect) = a.coord == b.low == b.high
 Base.:(==)(a::Rect, b::Point) = b == a
 
 """
+    touches(a::Rect{T,N}, b::Rect{T,N}) where {T,N}
+
 Check whether `a` and `b` touch
 (i.e. any `low` side touches `low` or `high` touches `high`).
 """

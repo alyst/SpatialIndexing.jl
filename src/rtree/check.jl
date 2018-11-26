@@ -1,6 +1,12 @@
 nelements(node::Leaf) = length(node)
 nelements(node::Branch) = sum(nelements, children(node))
 
+# check the R-tree node (branch or leaf):
+# * the parent
+# * the level
+# * the number of attached elements
+# * element id uniqueness
+# * the MBR (should fit the MBR of children)
 function check(node::Node{T,N,V}, tree::RTree{T,N,V},
                nnodes_perlevel::AbstractVector{Int}, ids::Union{Set, Nothing}) where {T,N,V}
     nnodes_perlevel[level(node) + 1] += 1
@@ -28,7 +34,7 @@ function check(node::Node{T,N,V}, tree::RTree{T,N,V},
 end
 
 # check the tree:
-# * the parent
+# * the root
 # * the height
 # * the number of elements
 # * the number of nodes per level

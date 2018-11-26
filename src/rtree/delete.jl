@@ -9,7 +9,7 @@ function Base.delete!(tree::RTree{T,N}, br::Rect{T,N}, id::Any = nothing) where 
     leafx = findleaf(tree, br, id)
     leafx === nothing && __spatial_keyerror(eltype(tree), br, id)
     _detach!(leafx[1], leafx[2], tree)
-    tmpdetached = Vector{nodetype(tree)}() # FIXME Union{Leaf,Branch} ?
+    tmpdetached = Vector{nodetype(tree)}() # FIXME use pool, Union{Leaf,Branch} ?
     _condense!(leafx[1], tree, tmpdetached)
     _reinsert!(tree, tmpdetached)
     tree.nelems -= 1
