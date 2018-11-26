@@ -103,7 +103,8 @@ function omt_subtree(elems::AbstractVector, tree::RTree,
     end
 
     # subtree root
-    node = acquire(tree, lev > 1 ? Branch : Leaf, lev)
+    @assert lev > 1
+    node = acquire(tree, Branch, lev)
 
     # create subtrees
     nelems_subtree = fld1(length(elems), nsubtrees) # actual fill of the subtree
@@ -117,8 +118,8 @@ function omt_subtree(elems::AbstractVector, tree::RTree,
         for j in 1:nelems_subtree:length(elems_slice)
             subtree_elems_range = j:min(j+nelems_subtree-1, length(elems_slice))
             child = omt_subtree(view(elems_slice, subtree_elems_range), tree,
-                                lev - 1, lev > 1 ? branch_fill[1] : 1,
-                                lev > 1 ? min(branch_fill[1] * branch_fill[2], capacity(Branch, tree)) : leaf_fill,
+                                lev - 1, branch_fill[1],
+                                min(branch_fill[1] * branch_fill[2], capacity(Branch, tree)),
                                 leaf_fill, branch_fill)
             _attach!(node, child, tree)
             tree.nnodes_perlevel[lev - 1] += 1
