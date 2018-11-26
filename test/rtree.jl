@@ -194,7 +194,7 @@ end
         @test tree === SI.load!(tree, enumerate(mbrs), method=:OMT,
                                 getid = x -> x[1], getmbr = x -> x[2], getval = x -> string(x[1]))
         @test SI.check(tree)
-        @test length(tree) ==length(mbrs)
+        @test length(tree) == length(mbrs)
         @show SI.height(tree)
         @show tree.nnodes_perlevel
         # cannot bulk-load into non-empty tree

@@ -9,20 +9,21 @@ spatial data in Julia (http://julialang.org/).
 
 # Installation
 ```julia
-using Pkg; Pkg.add("https://github.com/alyst/SpatialIndexing.jl")
+using Pkg; Pkg.add("SpatialIndexing")
 ```
-from a Julia REPL.
+from Julia REPL.
 
 # Features
 
 ## R-tree
 
-[R-tree](https://en.wikipedia.org/wiki/R-tree) organizes the data into
+[R-tree](https://en.wikipedia.org/wiki/R-tree) organizes data into
 hierarchical structure and ensures that:
-  * the minimal bounding rectangles (MBRs) of the nodes (rectangles that
-    encompass all attached data elements) stay compact,
-  * the MBRs of the nodes from the same R-tree level have minimal overlap
+  * minimal bounding rectangles (MBRs) of the nodes (rectangles that
+    encompass all data elements in the subtree) stay compact,
+  * MBRs of the nodes from the same R-tree level have minimal overlap
     with each other.
+
 The key benefit of R-tree is its ability to rebalance itself
 and maintain efficient structure while handling dynamic data (massive insertions
 and deletions).

@@ -14,7 +14,7 @@ function _condense!(node::Node, tree::RTree, tmpdetached::AbstractVector{<:Node}
 
             # tree became 1 level shorter
             pop!(tree.nnodes_perlevel)
-            # HACK: pending deleteNode for deleted child will decrease nodesInLevel, later on.
+            # HACK: pending _detach for child will decrease nnodes_perlevel, later on.
             tree.nnodes_perlevel[end-1] = 2
         else
             # due to data removal.

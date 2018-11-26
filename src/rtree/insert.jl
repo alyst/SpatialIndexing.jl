@@ -179,8 +179,8 @@ function _insert!_fullnode_rstar(node::Node, child::Any, con::SubtreeContext)
         _attach!(newnode, node[children_order[i]], con.tree)
     end
 
-    # Divertion from R*-Tree algorithm here. First update
-    # the path to the root, then start reinserts, to avoid complicated handling
+    # Divertion from R*-Tree algorithm proposed in libspatialindex:
+    # First update the path to the root, then start reinserts, to avoid complicated handling
     # of changes to the same node from multiple insertions.
     #@debug "_insert!_fullnode_rstar(): replace the node"
     _replace!(node, newnode, oldmbr, con) # replace the node (so (nkeep+1):... children are detached from the tree)

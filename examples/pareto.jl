@@ -25,10 +25,7 @@ rect = SI.Rect((-1.0, -2.0), (2.0, -0.5))
 n_in_rect = sum(br -> in(br, rect), mbrs)
 SI.subtract!(seq_tree, rect);
 SI.check(seq_tree)
-seq_tree.nelems
-seq_tree.nelem_deletions
-seq_tree.nnode_reinsertions
-seq_tree.nnode_splits
+@show seq_tree.nelems seq_tree.nelem_deletions seq_tree.nnode_reinsertions seq_tree.nnode_splits
 
 SI.load!(bulk_tree, enumerate(mbrs), getid=x->x[1], getmbr=x->x[2], getval=x->string(x[1]));
 SI.check(bulk_tree)
@@ -60,9 +57,4 @@ include(joinpath(@__DIR__, "plot_utils.jl"))
 seq_tree_plot = plot(seq_tree);
 open(joinpath(@__DIR__, "pareto_rtree_seq.html"), "w") do io
     PlotlyJS.savehtml(io, seq_tree_plot, :embed)
-end
-
-bulk_tree_plot = plot(bulk_tree);
-open(joinpath(@__DIR__, "spiral_rtree_bulk.html"), "w") do io
-    PlotlyJS.savehtml(io, bulk_tree_plot, :embed)
 end
