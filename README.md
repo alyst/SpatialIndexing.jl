@@ -18,14 +18,16 @@ from a Julia REPL.
 ## R-tree
 
 [R-tree](https://en.wikipedia.org/wiki/R-tree) organizes the data into
-hierarchical structure and ensures that the minimal bounding rectangles (MBRs)
-of the nodes (rectangles that encompass all attached data elements) stay compact,
-and that the MBRs of the nodes from the same R-tree level have minimal overlap
-with each other. The key benefit of R-tree is its ability to rebalance itself
+hierarchical structure and ensures that:
+  * the minimal bounding rectangles (MBRs) of the nodes (rectangles that
+    encompass all attached data elements) stay compact,
+  * the MBRs of the nodes from the same R-tree level have minimal overlap
+    with each other.
+The key benefit of R-tree is its ability to rebalance itself
 and maintain efficient structure while handling dynamic data (massive insertions
 and deletions).
 
-`RTree` implementation supports:
+`SpatialIndexing` provides `RTree` type that supports:
   * different R-tree variants (classic [R-tree](https://en.wikipedia.org/wiki/R-tree),
 [R*-tree](https://en.wikipedia.org/wiki/R*_tree), linear and quadratic node splits)
   * `insert!(tree, item)`, `delete!(tree, item)` for element-wise insertion and deletion
