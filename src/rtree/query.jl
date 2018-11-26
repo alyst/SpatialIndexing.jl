@@ -54,6 +54,53 @@ function _isempty(node::Node, region::Region{T,N}) where {T,N}
     return true
 end
 
+# the RTreeIterator/RTreeRegionQueryIterator state
+# FIXME can mark whether the MBR of the node satisfies the query, so all
+# its subnodes and data elements need not to be checked
+struct RTreeIteratorState{T,N,V}
+    leaf::Leaf{T,N,V}       # current leaf node
+    indices::Vector{Int}    # indices of the nodes (in their parents) in the current subtree
+end
+
+# get the current data element pointed by `RTreeIteratorState`
+Base.get(state::RTreeIteratorState) = @inbounds(state.leaf[state.indices[1]])
+
+# iterate all R-tree data elements
+function Base.iterate(tree::RTree)
+    isempty(tree) && return nothing
+    node = tree.root
+    indices = fill(1, height(tree))
+    # get the first leaf
+    while level(node) > 0
+        node = node[1]
+    end
+    state = RTreeIteratorState(node, indices)
+    return get(state), state # first element of the first leaf
+end
+
+function Base.iterate(tree::RTree, state::RTreeIteratorState)
+    @inbounds if state.indices[1] < length(state.leaf) # fast branch: next data element in the same leaf
+        state.indices[1] += 1
+        return get(state), state
+    end
+    # leaf iterations is done, go up until the first non-visited branch
+    node = state.leaf
+    while state.indices[level(node) + 1] >= length(node)
+        hasparent(node) || return nothing # returned to root, iteration finished
+        node = parent(node)
+    end
+    # go down into the first leaf of the new subtree
+    ix = state.indices[level(node) + 1] += 1
+    node = node[ix]
+    @inbounds while true
+        state.indices[level(node) + 1] = 1
+        level(node) == 0 && break
+        node = node[1]
+    end
+    new_state = RTreeIteratorState(node, state.indices)
+    return get(new_state), new_state
+end
+
 #=
 TODO
 

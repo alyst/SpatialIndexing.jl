@@ -41,6 +41,11 @@ regiontype(si::SpatialIndex) = regiontype(typeof(si))
 Base.length(si::SpatialIndex) = si.nelems
 Base.isempty(si::SpatialIndex) = length(si) == 0
 
+# SpatialIndex data element iteration support
+Base.IteratorEltype(::Type{<:SpatialIndex}) = Base.HasEltype()
+Base.IteratorSize(::Type{<:SpatialIndex}) = Base.HasLength()
+# concrete SpatialIndex types should implement iterate()
+
 # arbitrary spatial elements support
 
 # Type trait for supporting id() method

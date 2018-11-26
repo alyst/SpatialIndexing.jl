@@ -1,4 +1,3 @@
-@testset "RTree" begin
 @testset "SpatialElem" begin
     @test SI.check_hasmbr(SI.Rect{Float64, 2}, SpatialElem{Float64, 2, Int, Int})
     @test_throws ArgumentError SI.check_hasmbr(SI.Rect{Float64, 2}, Int)
@@ -10,11 +9,13 @@
     @test_throws ArgumentError SI.check_hasid(Int, SpatialElem{Float64, 2, Nothing, Int})
 end
 
+@testset "RTree" begin
 @testset "Basic Operations" begin
     tree_vars = [SI.RTreeStar, SI.RTreeLinear, SI.RTreeQuadratic]
     @testset "RTree{Float,2,Int32,Int}(variant=$tree_var)" for tree_var in tree_vars
         ambr = SI.Rect((0.0, 0.0), (0.0, 0.0))
         bmbr = SI.Rect((0.0, 1.0), (0.0, 1.0))
+        cmbr = SI.Rect((0.5, 0.5), (0.5, 0.6))
 
         tree = RTree{Float64, 2}(Int32, Int, variant=tree_var)
         @test tree isa RTree{Float64, 2, SpatialElem{Float64, 2, Int32, Int}}
@@ -32,6 +33,9 @@ end
         @test SI.check(tree)
         @test_throws KeyError delete!(tree, SI.empty(SI.regiontype(tree)), 1)
         @test SI.check(tree)
+        @test iterate(tree) === nothing
+        @test collect(tree) == eltype(tree)[]
+        @test typeof(collect(tree)) === Vector{eltype(tree)}
 
         @test insert!(tree, ambr, 1, 2) === tree
         @test length(tree) == 1
@@ -43,17 +47,30 @@ end
         @test_throws KeyError delete!(tree, bmbr, 1)
         @test_throws KeyError delete!(tree, ambr, 2)
         @test SI.check(tree)
+        @test collect(tree) == [SpatialElem(ambr, Int32(1), 2)]
 
         @test insert!(tree, bmbr, 2, 2) === tree
         @test length(tree) == 2
         @test SI.height(tree) == 1
         @test isequal(SI.mbr(tree.root), SI.combine(ambr, bmbr))
         @test SI.check(tree)
+        @test length(collect(tree)) == 2
         @test_throws KeyError delete!(tree, bmbr, 1)
         @test_throws KeyError delete!(tree, ambr, 2)
         @test_throws KeyError delete!(tree, SI.empty(SI.regiontype(tree)), 1)
         @test delete!(tree, ambr, 1) === tree
         @test length(tree) == 1
+        @test SI.check(tree)
+
+        insert!(tree, ambr, 1, 2)
+        insert!(tree, cmbr, 2, 3)
+        @test length(tree) == 3
+        @test_throws SpatialIndexException SI.check(tree) # duplicate ID=2 (b and c)
+        @test delete!(tree, cmbr, 2) === tree
+        @test length(tree) == 2
+        # prepare tree with a(id=1), b(id=2), c(id=3)
+        @test insert!(tree, cmbr, 3, 3) === tree
+        @test length(tree) == 3
         @test SI.check(tree)
     end
 
@@ -140,6 +157,12 @@ end
                     @test elem.val == string(i)
                 end
             end
+        end
+
+        @testset "iterate" begin
+            all_elems = collect(tree)
+            @test length(all_elems) == length(tree)
+            @test eltype(all_elems) === eltype(tree)
         end
     end
 
