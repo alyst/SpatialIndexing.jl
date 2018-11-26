@@ -23,7 +23,7 @@ Base.delete!(tree::RTree{T,N}, pt::Point{T,N}, id::Any = nothing) where {T,N} =
 # deletes the subtree with the `node` root from the `tree`
 # (does not update the parent MBR)
 function delete_subtree!(tree::RTree, node::Node)
-    @info "delete_subtree(): lev=$(level(node))"
+    #@debug "delete_subtree(): lev=$(level(node))"
     _delete_subtree!(node, tree, level(node))
 end
 
@@ -36,7 +36,7 @@ function _delete_subtree!(node::Node, tree::RTree, height::Integer)
         tree.nelems -= length(node)
         tree.nelem_deletions += length(node)
     end
-    @info "_delete_subtree(): empty children ($(length(node.children)) objs) of node lev=$(level(node)) parent=$(hasparent(node))"
+    #@debug "_delete_subtree(): empty children ($(length(node.children)) objs) of node lev=$(level(node)) parent=$(hasparent(node))"
     empty!(node.children)
     if hasparent(node) # remove the node
         tree.nnodes_perlevel[level(node)] -= 1 # don't count this node anymore
@@ -48,7 +48,7 @@ function _delete_subtree!(node::Node, tree::RTree, height::Integer)
     else # root node just stays empty
         node.mbr = empty(mbrtype(node))
     end
-    @info "_delete_subtree(): done node lev=$(level(node)) parent=$(hasparent(node))"
+    #@debug "_delete_subtree(): done node lev=$(level(node)) parent=$(hasparent(node))"
     return nothing
 end
 
@@ -60,12 +60,12 @@ Subtracts the `region` from the `tree`, i.e. removes all elements within
 `region`.
 """
 function subtract!(tree::RTree{T,N}, reg::Region{T,N}) where {T,N}
-    @info "subtract!(): region=$(reg)"
+    #@debug "subtract!(): region=$(reg)"
     isempty(tree) && return tree
 
     tmpdetached = Vector{nodetype(tree)}()
     status = _subtract!(tree.root, 0, reg, tree, tmpdetached)
-    @info "subtract!(): status=$(status) tmpdetached=$(length(tmpdetached))"
+    #@debug "subtract!(): status=$(status) tmpdetached=$(length(tmpdetached))"
     if status == 1 # tree changed, but not removed
         _condense!(tree.root, tree, tmpdetached) # try to condense the root
     elseif status == 2 # whole tree removed (contained in reg)
@@ -80,10 +80,10 @@ end
 function _subtract!(node::Node, node_ix::Int, reg::Region, tree::RTree,
                     tmpdetached::AbstractVector{<:Node})
     nodembr = mbr(node)
-    @info "_subtract!(): lev=$(level(node)) i=$node_ix len=$(length(node))"
+    #@debug "_subtract!(): lev=$(level(node)) i=$node_ix len=$(length(node))"
     # TODO juxtaposition() method that combines in() and intersects()?
     if in(nodembr, reg)
-        @debug "_subtract!(): delete subtree lev=$(level(node)) i=$node_ix len=$(length(node))"
+        #@debug "_subtract!(): delete subtree lev=$(level(node)) i=$node_ix len=$(length(node))"
         delete_subtree!(tree, node)
         return 2 # node removed
     elseif intersects(nodembr, reg)
@@ -98,7 +98,7 @@ function _subtract!(node::Node, node_ix::Int, reg::Region, tree::RTree,
             else
                 @assert node isa Leaf
                 if in(oldmbr, reg)
-                    @debug "_subtract!(): detach elem lev=$(level(node)) i=$i len=$(length(node))"
+                    #@debug "_subtract!(): detach elem lev=$(level(node)) i=$i len=$(length(node))"
                     _detach!(node, i, tree, updatembr = false) # don't update MBR, we do it later
                     tree.nelems -= 1
                     tree.nelem_deletions += 1

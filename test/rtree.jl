@@ -154,8 +154,8 @@ end
             @test SI.check(tree)
             #@debug "$i: len=$(length(tree)) height=$(SI.height(tree))"
         end
-        @show SI.height(tree)
-        @show tree.nnodes_perlevel
+        #@show SI.height(tree)
+        #@show tree.nnodes_perlevel
 
         @testset "findleaf" begin
             # check that the elements can be found
@@ -195,8 +195,8 @@ end
                                 getid = x -> x[1], getmbr = x -> x[2], getval = x -> string(x[1]))
         @test SI.check(tree)
         @test length(tree) == length(mbrs)
-        @show SI.height(tree)
-        @show tree.nnodes_perlevel
+        #@show SI.height(tree)
+        #@show tree.nnodes_perlevel
         # cannot bulk-load into non-empty tree
         @test_throws ArgumentError SI.load!(tree, enumerate(mbrs), method=:OMT,
                                             getid = x -> x[1], getmbr = x -> x[2], getval = x -> string(x[1]))
@@ -247,14 +247,14 @@ end
         SI.load!(tree, enumerate(pts),
                  getid = x -> x[1], getmbr = x -> SI.Rect(x[2], x[2]), getval = x -> string(x[1]))
         @test length(tree) == length(pts)
-        @show tree.nelems tree.nnodes_perlevel
+        #@show tree.nelems tree.nnodes_perlevel
 
         rect = SI.Rect((-3.0, -4.0, -5.0), (5.0, 8.0, 3.0))
         n_in_rect = sum(pt -> in(SI.Point(pt), rect), pts)
         SI.subtract!(tree, rect)
         @test SI.check(tree)
         @test tree.nelem_deletions == n_in_rect
-        @show tree.nelems tree.nnodes_perlevel tree.nelem_deletions tree.nelem_insertions
+        #@show tree.nelems tree.nnodes_perlevel tree.nelem_deletions tree.nelem_insertions
     end
 end
 
