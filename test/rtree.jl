@@ -34,7 +34,13 @@ end
         @test_throws KeyError delete!(tree, SI.empty(SI.regiontype(tree)), 1)
         @test SI.check(tree)
         @test iterate(tree) === nothing
+        @test iterate(contained_in(tree, SI.empty(SI.mbrtype(tree)))) === nothing
+        @test iterate(intersects_with(tree, SI.empty(SI.mbrtype(tree)))) === nothing
+        @test iterate(contained_in(tree, cmbr)) === nothing
+        @test iterate(intersects_with(tree, cmbr)) === nothing
         @test collect(tree) == eltype(tree)[]
+        @test collect(contained_in(tree, cmbr)) == eltype(tree)[]
+        @test collect(intersects_with(tree, cmbr)) == eltype(tree)[]
         @test typeof(collect(tree)) === Vector{eltype(tree)}
 
         @test insert!(tree, ambr, 1, 2) === tree
@@ -72,6 +78,12 @@ end
         @test insert!(tree, cmbr, 3, 3) === tree
         @test length(tree) == 3
         @test SI.check(tree)
+        @test length(collect(contained_in(tree, SI.Rect((0.0, 0.0), (1.0, 1.0))))) == 3
+        @test length(collect(intersects_with(tree, SI.Rect((0.0, 0.0), (1.0, 1.0))))) == 3
+        @test length(collect(contained_in(tree, SI.Rect((0.0, 0.0), (0.6, 0.6))))) == 2
+        @test length(collect(intersects_with(tree, SI.Rect((0.0, 0.0), (0.6, 0.6))))) == 2
+        @test length(collect(contained_in(tree, SI.Rect((0.0, 0.0), (0.55, 0.55))))) == 1 # a only
+        @test length(collect(intersects_with(tree, SI.Rect((0.0, 0.0), (0.55, 0.55))))) == 2 # a and c
     end
 
     @testset "RTree{Int,3,String,Nothing}(variant=$tree_var) (no id)" for tree_var in tree_vars
@@ -163,6 +175,16 @@ end
             all_elems = collect(tree)
             @test length(all_elems) == length(tree)
             @test eltype(all_elems) === eltype(tree)
+
+            bound_mbr = SI.Rect((-40.0, -20.0, -20.0), (30.0, 50.0, 40.0))
+
+            in_elems = collect(contained_in(tree, bound_mbr))
+            @test eltype(in_elems) === eltype(tree)
+            @test length(in_elems) == sum(br -> in(br, bound_mbr), mbrs)
+
+            isect_elems = collect(intersects_with(tree, bound_mbr))
+            @test eltype(isect_elems) === eltype(tree)
+            @test length(isect_elems) == sum(br -> SI.intersects(br, bound_mbr), mbrs)
         end
     end
 

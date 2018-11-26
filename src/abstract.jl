@@ -14,18 +14,11 @@ end
 __spatial_keyerror(eltype::Type, br::Region, id::Any = nothing) =
     idtrait(eltype) === HasNoID ? throw(KeyError(br)) : throw(KeyError((br, id)))
 
-@enum QueryType::Int QueryContainedIn QueryIntersectsWith QueryPoint QueryNearestNeighbours
-
 """
 Base abstract class for spatial indexing of elements of type `V`
 in `N`-dimensional space with dimensions of type `T`.
 """
 abstract type SpatialIndex{T<:Number, N, V} end
-
-"""
-Base abstract class for implementing spatial queries in `N`-dimensional space.
-"""
-abstract type SpatialQueryIterator{T<:Number,N,Q} end
 
 # basic SpatialIndex API
 Base.eltype(::Type{<:SpatialIndex{<:Any, <:Any, V}}) where V = V
@@ -45,6 +38,25 @@ Base.isempty(si::SpatialIndex) = length(si) == 0
 Base.IteratorEltype(::Type{<:SpatialIndex}) = Base.HasEltype()
 Base.IteratorSize(::Type{<:SpatialIndex}) = Base.HasLength()
 # concrete SpatialIndex types should implement iterate()
+
+"""
+Specifies the kind of spatial data query.
+"""
+@enum QueryKind QueryContainedIn QueryIntersectsWith # TODO QueryPoint QueryNearestNeighbours
+
+"""
+Base abstract class for implementing spatial queries in `N`-dimensional space.
+"""
+abstract type SpatialQueryIterator{T<:Number,N,V,Q} end
+
+Base.IteratorEltype(::Type{<:SpatialQueryIterator}) = Base.HasEltype()
+Base.IteratorSize(::Type{<:SpatialQueryIterator}) = Base.SizeUnknown()
+
+Base.eltype(::Type{<:SpatialQueryIterator{<:Any,<:Any,V}}) where V = V
+Base.eltype(iter::SpatialQueryIterator) = eltype(typeof(iter))
+
+querykind(::Type{<:SpatialQueryIterator{<:Any,<:Any,<:Any,Q}}) where Q = Q
+querykind(iter::SpatialQueryIterator) = querykind(typeof(iter))
 
 # arbitrary spatial elements support
 

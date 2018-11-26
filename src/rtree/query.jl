@@ -101,59 +101,113 @@ function Base.iterate(tree::RTree, state::RTreeIteratorState)
     return get(new_state), new_state
 end
 
-#=
-TODO
-
-struct RTreeRegionQueryIterator{T,N,K,TT,R} <: SpatialQuery{T,N,K}
+# iterates R-tree data elements matching `Q` query w.r.t `region`
+struct RTreeRegionQueryIterator{T,N,V,Q,TT,R} <: SpatialQueryIterator{T,N,V,Q}
     tree::TT
     region::R
 
     function RTreeRegionQueryIterator{T,N}(kind::QueryKind, tree::TT, region::R) where
-        {T, N, TT <: RTree{T,N}, R <: Region{T,N}}
-        new{T,N,kind,TT,R}(tree, region)
+            {T, N, V, TT <: RTree{T,N,V}, R <: Region{T,N}}
+        new{T,N,V,kind,TT,R}(tree, region)
     end
 end
 
+function Base.iterate(iter::RTreeRegionQueryIterator)
+    # no data or doesn't intersect at all
+    if (isempty(iter.tree) || !should_visit(iter.tree.root, iter))
+        #@debug "iterate(): empty iter=$iter root_visit=$(should_visit(iter.tree.root, iter))"
+        return nothing
+    end
+    return _iterate(iter, iter.tree.root, fill(1, height(iter.tree)))
+end
+
+function Base.iterate(iter::RTreeRegionQueryIterator,
+                      state::RTreeIteratorState)
+    @inbounds ix = state.indices[1] = _nextchild(state.leaf, state.indices[1] + 1, iter)
+    if ix <= length(state.leaf) # fast branch: next data element in the same leaf
+        return get(state), state
+    else
+        return _iterate(iter, state.leaf, state.indices)
+    end
+end
+
+"""
+    contained_in(index::SpatialIndex, region::Region)
+
+Get iterator for `index` elements contained in `region`.
+"""
 contained_in(tree::RTree{T,N}, region::Region{T,N}) where {T,N} =
     RTreeRegionQueryIterator{T,N}(QueryContainedIn, tree, region)
 
+"""
+    intersects_with(index::SpatialIndex, region::Region)
+
+Get iterator for `index` elements intersecting with `region`.
+"""
 intersects_with(tree::RTree{T,N}, region::Region{T,N}) where {T,N} =
     RTreeRegionQueryIterator{T,N}(QueryIntersectsWith, tree, region)
 
-querytype(iter::RTreeRegionQueryIterator{<:Any,<:Any,K}) where K = K
+# whether the R-tree node/data element should be visited (i.e. its children examined)
+# by the region iterator
+should_visit(node::Node, iter::RTreeRegionQueryIterator) =
+    intersects(iter.region, mbr(node)) # FIXME update for NotContainedIn etc
 
-isok(iter::TreeRegionQueryIterator{T,N}, node::Any) where {T,N} =
-    intersects(iter.region, mbr(node))
+should_visit(el::Any, iter::RTreeRegionQueryIterator) =
+    ((querykind(iter) == QueryContainedIn) && contains(iter.region, mbr(el))) ||
+    ((querykind(iter) == QueryIntersectsWith) && intersects(iter.region, mbr(el)))
+    # FIXME update for NotContainedIn etc
 
-isok(iter::RTreeRegionQueryIterator{<:Any,<:Any,QueryContainedIn}, el::Any) =
-    contains(iter.region, mbr(node))
-
-struct RTreeRegionQueryIteratorState{T,N,Y}
-    subtree::Vector{Node{T,N}}
+# get the index of the first child of `node` starting from `pos` (including)
+# that satifies `iter` query (or length(node) + 1 if not found)
+@inline function _nextchild(node::Node, pos::Integer, iter::RTreeRegionQueryIterator)
+    if level(node) == 0 && length(iter.tree) > 100 && pos <= length(node)
+        #@debug "_nextchild(): lev=$(level(node)) len=$(length(node)) pos=$pos should_visit=$(should_visit(@inbounds(node[pos]), iter)) rect=$(mbr(node[pos]))"
+    end
+    while pos <= length(node) && !should_visit(@inbounds(node[pos]), iter)
+        pos += 1
+        if level(node) == 0 && length(iter.tree) > 100 && pos <= length(node)
+            #@debug "_nextchild(): lev=$(level(node)) len=$(length(node)) pos=$pos should_visit=$(should_visit(@inbounds(node[pos]), iter)) rect=$(mbr(node[pos]))"
+        end
+    end
+    return pos
 end
 
-function next(iter::RTreeRegionQueryIterator{T,N},
-              state::RTreeRegionQueryIteratorState{T, N})
-    isempty(state.subtree) && return nothing
+# do depth-first search starting from the `node` subtree and return the
+# `RTreeIteratorState` for the first leaf that satisfies `iter` query or
+# `nothing` if no such leaf in the R-tree.
+# The method modifies `indicies` array and uses it for the returned iteration state
+function _iterate(iter::RTreeRegionQueryIterator, nod::Node, indices::AbstractVector{Int})
+    node = nod
+    #@debug"_iterate(): enter lev=$(level(node)) indices=$indices"
+    @assert length(indices) == height(iter.tree)
+    ix = @inbounds(indices[level(node) + 1])
+    while true
+        ix_new = _nextchild(node, ix, iter)
+        #@debug "node=$(Int(Base.pointer_from_objref(node))) lev=$(level(node)) ix_new=$ix_new"
+        if ix_new > length(node) # all node subtrees visited, go up one level
+            while ix_new > length(node)
+                if !hasparent(node)
+                    #@debug "_iterate(): finished lev=$(level(node)) indices=$indices ix_new=$ix_new"
+                    return nothing # returned to root, iteration finished
+                end
+                #@debug "_iterate(): up lev=$(level(node)) indices=$indices ix_new=$ix_new"
+                node = parent(node)
+                @inbounds ix_new = indices[level(node) + 1] += 1 # next subtree
+            end
+            ix = ix_new
+            #@debug "_iterate(): next subtree lev=$(level(node)) indices=$indices ix_new=$ix_new"
+        else # subtree found
+            ix_new > ix && @inbounds(indices[level(node) + 1] = ix_new)
+            if node isa Branch
+                # go down into the first child
+                indices[level(node)] = ix = 1
+                node = node[ix_new]
+                #@debug "_iterate(): down lev=$(level(node)) indices=$indices"
+            else # Leaf
+                #@debug "_iterate(): return lev=$(level(node)) indices=$indices"
+                state = RTreeIteratorState(node, indices)
+                return get(state), state
+            end
+        end
+    end
 end
-
-function Base.iterate(iter::RTreeRegionQueryIterator)
-    # no root or doesn't intersect at all
-    iter.tree.root !== nothing || !isok(iter, iter.tree.root) || return nothing
-    subtree = push!(Vector{Node{T,N}}(), tree.root) # start with the root
-    return iterate(iter, RTreeRegionQueryIteratorState(subtree))
-end
-
-function Base.iterate(iter::RTreeRegionQueryIterator{T,N},
-                      state::RTreeRegionQueryIteratorState{T,N})
-    isempty(state.subtree) && return nothing
-    node = pop!(state.subtree)
-
-    node = next(iter, state)
-    if node === nothing
-          return nothing
-      else
-          return (node, state)
-      end
-end
-=#

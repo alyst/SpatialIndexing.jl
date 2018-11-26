@@ -1,7 +1,8 @@
 module SpatialIndexing
 
 export SpatialIndex, SpatialIndexException, SpatialElem,
-    RTree, SimpleSpatialIndex
+    RTree, SimpleSpatialIndex,
+    contained_in, intersects_with
 
 include("regions.jl")
 include("pool.jl")
