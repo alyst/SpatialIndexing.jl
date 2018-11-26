@@ -54,9 +54,7 @@ function _isempty(node::Node, region::Region{T,N}) where {T,N}
     return true
 end
 
-# the RTreeIterator/RTreeRegionQueryIterator state
-# FIXME can mark whether the MBR of the node satisfies the query, so all
-# its subnodes and data elements need not to be checked
+# the RTreeIterator state
 struct RTreeIteratorState{T,N,V}
     leaf::Leaf{T,N,V}       # current leaf node
     indices::Vector{Int}    # indices of the nodes (in their parents) in the current subtree
@@ -112,22 +110,32 @@ struct RTreeRegionQueryIterator{T,N,V,Q,TT,R} <: SpatialQueryIterator{T,N,V,Q}
     end
 end
 
+# the RTreeRegionQueryIterator state
+struct RTreeQueryIteratorState{T,N,V}
+    leaf::Leaf{T,N,V}       # current leaf node
+    indices::Vector{Int}    # indices of the nodes (in their parents) in the current subtree
+    needtests::BitVector    # whether children MBRs should be tested or not (because they automatically satisfy query)
+end
+
+# get the current data element pointed by `RTreeIteratorState`
+Base.get(state::RTreeQueryIteratorState) = @inbounds(state.leaf[state.indices[1]])
+
 function Base.iterate(iter::RTreeRegionQueryIterator)
+    isempty(iter.tree) && return nothing
     # no data or doesn't intersect at all
-    if (isempty(iter.tree) || !should_visit(iter.tree.root, iter))
-        #@debug "iterate(): empty iter=$iter root_visit=$(should_visit(iter.tree.root, iter))"
-        return nothing
-    end
-    return _iterate(iter, iter.tree.root, fill(1, height(iter.tree)))
+    root_match = should_visit(iter.tree.root, iter)
+    root_match == QueryNoMatch && return nothing
+    return _iterate(iter, iter.tree.root, fill(1, height(iter.tree)),
+                    root_match == QueryMatchComplete ? falses(height(iter.tree)) : trues(height(iter.tree)))
 end
 
 function Base.iterate(iter::RTreeRegionQueryIterator,
-                      state::RTreeIteratorState)
-    @inbounds ix = state.indices[1] = _nextchild(state.leaf, state.indices[1] + 1, iter)
+                      state::RTreeQueryIteratorState)
+    @inbounds ix = state.indices[1] = _nextchild(state.leaf, state.indices[1] + 1, state.needtests[1], iter)[1]
     if ix <= length(state.leaf) # fast branch: next data element in the same leaf
         return get(state), state
     else
-        return _iterate(iter, state.leaf, state.indices)
+        return _iterate(iter, state.leaf, state.indices, state.needtests)
     end
 end
 
@@ -149,40 +157,45 @@ intersects_with(tree::RTree{T,N}, region::Region{T,N}) where {T,N} =
 
 # whether the R-tree node/data element should be visited (i.e. its children examined)
 # by the region iterator
-should_visit(node::Node, iter::RTreeRegionQueryIterator) =
-    intersects(iter.region, mbr(node)) # FIXME update for NotContainedIn etc
+function should_visit(node::Node, iter::RTreeRegionQueryIterator)
+    kind = querykind(iter)
+    if kind == QueryContainedIn || kind == QueryIntersectsWith
+        contains(iter.region, mbr(node)) && return QueryMatchComplete # node (and all its children) fully contained in query region
+        intersects(iter.region, mbr(node)) && return QueryMatchPartial # node (and maybe its children) intersects query region
+        return QueryNoMatch
+    else
+        throw(ArgumentError("Unknown spatial query kind: $kind"))
+    end
+end
 
 should_visit(el::Any, iter::RTreeRegionQueryIterator) =
     ((querykind(iter) == QueryContainedIn) && contains(iter.region, mbr(el))) ||
-    ((querykind(iter) == QueryIntersectsWith) && intersects(iter.region, mbr(el)))
+    ((querykind(iter) == QueryIntersectsWith) && intersects(iter.region, mbr(el))) ?
+    QueryMatchComplete : QueryNoMatch
     # FIXME update for NotContainedIn etc
 
 # get the index of the first child of `node` starting from `pos` (including)
 # that satifies `iter` query (or length(node) + 1 if not found)
-@inline function _nextchild(node::Node, pos::Integer, iter::RTreeRegionQueryIterator)
-    if level(node) == 0 && length(iter.tree) > 100 && pos <= length(node)
-        #@debug "_nextchild(): lev=$(level(node)) len=$(length(node)) pos=$pos should_visit=$(should_visit(@inbounds(node[pos]), iter)) rect=$(mbr(node[pos]))"
-    end
-    while pos <= length(node) && !should_visit(@inbounds(node[pos]), iter)
+@inline function _nextchild(node::Node, pos::Integer, needtests::Bool, iter::RTreeRegionQueryIterator)
+    res = needtests ? QueryNoMatch : QueryMatchComplete # if tests not needed, all node subtrees are considered fully matching
+    while pos <= length(node) && needtests &&
+            ((res = should_visit(@inbounds(node[pos]), iter)) == QueryNoMatch)
         pos += 1
-        if level(node) == 0 && length(iter.tree) > 100 && pos <= length(node)
-            #@debug "_nextchild(): lev=$(level(node)) len=$(length(node)) pos=$pos should_visit=$(should_visit(@inbounds(node[pos]), iter)) rect=$(mbr(node[pos]))"
-        end
     end
-    return pos
+    return pos, res
 end
 
 # do depth-first search starting from the `node` subtree and return the
 # `RTreeIteratorState` for the first leaf that satisfies `iter` query or
 # `nothing` if no such leaf in the R-tree.
 # The method modifies `indicies` array and uses it for the returned iteration state
-function _iterate(iter::RTreeRegionQueryIterator, nod::Node, indices::AbstractVector{Int})
-    node = nod
+function _iterate(iter::RTreeRegionQueryIterator, node::Node,
+                  indices::AbstractVector{Int}, needtests::AbstractVector{Bool})
     #@debug"_iterate(): enter lev=$(level(node)) indices=$indices"
     @assert length(indices) == height(iter.tree)
     ix = @inbounds(indices[level(node) + 1])
     while true
-        ix_new = _nextchild(node, ix, iter)
+        ix_new, queryres = _nextchild(node, ix, needtests[level(node)+1], iter)
         #@debug "node=$(Int(Base.pointer_from_objref(node))) lev=$(level(node)) ix_new=$ix_new"
         if ix_new > length(node) # all node subtrees visited, go up one level
             while ix_new > length(node)
@@ -201,11 +214,12 @@ function _iterate(iter::RTreeRegionQueryIterator, nod::Node, indices::AbstractVe
             if node isa Branch
                 # go down into the first child
                 indices[level(node)] = ix = 1
+                needtests[level(node)] = queryres != QueryMatchComplete
                 node = node[ix_new]
                 #@debug "_iterate(): down lev=$(level(node)) indices=$indices"
             else # Leaf
                 #@debug "_iterate(): return lev=$(level(node)) indices=$indices"
-                state = RTreeIteratorState(node, indices)
+                state = RTreeQueryIteratorState(node, indices, needtests)
                 return get(state), state
             end
         end

@@ -45,6 +45,11 @@ Specifies the kind of spatial data query.
 @enum QueryKind QueryContainedIn QueryIntersectsWith # TODO QueryPoint QueryNearestNeighbours
 
 """
+Specifies the result of spatial data query.
+"""
+@enum QueryMatch::Int QueryNoMatch=0 QueryMatchPartial=1 QueryMatchComplete=2 
+
+"""
 Base abstract class for implementing spatial queries in `N`-dimensional space.
 """
 abstract type SpatialQueryIterator{T<:Number,N,V,Q} end
