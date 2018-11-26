@@ -54,6 +54,8 @@ for storing spatial data.
 
 ![R*-tree of 10000 random points (sequential insertions)](examples/spiral_rtree_seq.png)
 
+![R*-tree of 3D Pareto Front (1233 of 100000 points; bulk-load)](examples/pareto3d_rtree_bulk.jpg)
+
 # See also
 
 Other Julia packages for spatial data:
