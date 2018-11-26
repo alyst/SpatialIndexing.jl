@@ -52,9 +52,9 @@ The behaviour of `RTree` is defined by the parameters supplied at its creation:
   * `tight_mbrs`: recalculate node MBR when the child is removed (default is `true`)
   * `branch_capacity`: capacity of branch nodes (default is `100`)
   * `leaf_capacity`: capacity of leaf nodes (default is `100`)
-  * `leafpool_capacity`: How many detached zero level nodes (leaves) should be kept for reuse (default is `100`)
-  * `twigpool_capacity`: How many detached first level nodes should be kept for reuse (default is `100`)
-  * `branchpool_capacity`: How many other (level > 1) detached branch nodes should be kept for reuse (default is `100`)
+  * `leafpool_capacity`: How many detached 1st level nodes (leaves) should be kept for reuse (default is `100`)
+  * `twigpool_capacity`: How many detached 2nd level nodes should be kept for reuse (default is `100`)
+  * `branchpool_capacity`: How many other (level > 2) detached branch nodes should be kept for reuse (default is `100`)
   * `nearmin_overlap`: How many candidates to consider when identifying the node with minimal overlap (default is `32`)
   * `fill_factor`: How much should the node be filled (fraction of its capacity) after splitting (default is `0.7`)
   * `splitdistribution_factor`: How much can the sizes of the two nodes differ after splitting (default is `0.4`)
@@ -144,7 +144,7 @@ nodetype(tree::RTree) = nodetype(typeof(tree))
 check_eltype_rtree(el::Any, tree::RTree) =
     check_eltype_rtree(typeof(el), leaftype(tree))
 
-height(tree::RTree) = level(tree.root) + 1
+height(tree::RTree) = level(tree.root)
 variant(tree::RTree) = tree.variant
 mbr(tree::RTree) = mbr(tree.root)
 
@@ -152,8 +152,8 @@ capacity(::T, tree::RTree) where T<:Node = capacity(T, tree)
 capacity(::Type{<:Leaf}, tree::RTree) = node_capacity(tree.leafpool)
 capacity(::Type{<:Branch}, tree::RTree) = node_capacity(tree.branchpool)
 
-function acquire(tree::RTree, ::Type{<:Leaf}, lev::Int = 0, br::Rect = empty(mbrtype(tree)))
-    @assert lev == 0
+function acquire(tree::RTree, ::Type{<:Leaf}, lev::Int = 1, br::Rect = empty(mbrtype(tree)))
+    @assert lev == 1
     leaf = acquire!(tree.leafpool)
     @assert isempty(leaf)
     leaf.mbr = br
@@ -167,7 +167,8 @@ function release(tree::RTree, node::Leaf)
 end
 
 function acquire(tree::RTree, ::Type{<:Branch}, lev::Int, br::Rect = empty(regiontype(tree)))
-    node = acquire!(lev == 1 ? tree.twigpool : tree.branchpool)
+    @assert lev > 1
+    node = acquire!(lev == 2 ? tree.twigpool : tree.branchpool)
     @assert isempty(node)
     node.mbr = br
     node.level = lev
@@ -231,5 +232,5 @@ struct SubtreeContext{T,N,V,O}
     end
 end
 
-isoverflow(con::SubtreeContext, lev::Int) = con.level_overflow[lev+1]
-setoverflow!(con::SubtreeContext, lev::Int) = con.level_overflow[lev+1] = true
+isoverflow(con::SubtreeContext, lev::Int) = con.level_overflow[lev]
+setoverflow!(con::SubtreeContext, lev::Int) = con.level_overflow[lev] = true

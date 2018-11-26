@@ -8,7 +8,7 @@ Inserts `val` value identified by `br` bounding box (or point `pt`) and
 """
 function Base.insert!(tree::RTree, el::Any)
     check_eltype_rtree(el, tree)
-    _insert!(tree, el, 0)
+    _insert!(tree, el, 1)
     tree.nelems += 1
     tree.nelem_insertions += 1
     return tree
@@ -213,7 +213,7 @@ function _insert!_fullnode(node::Node, child::Any, con::SubtreeContext)
         _attach!(newroot, n2, con.tree)
         # tree grows
         con.tree.root = newroot
-        con.tree.nnodes_perlevel[level(node)+1] = 2
+        con.tree.nnodes_perlevel[level(node)] = 2
         push!(con.tree.nnodes_perlevel, 1)
     else # non-root, n1 and n2 replace the node in its parent
         _replace!(node, n1, n2, oldmbr, con)

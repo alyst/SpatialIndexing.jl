@@ -6,7 +6,7 @@ function _condense!(node::Node, tree::RTree, tmpdetached::AbstractVector{<:Node}
 
     if node === tree.root
         # eliminate root if it has only one child.
-        if level(node) != 0 && length(node) == 1
+        if level(node) > 1 && length(node) == 1
             @debug "_condense!(): eliminating root"
             tree.root = new_root = node[1]
             new_root.parent = nothing
@@ -120,7 +120,7 @@ function _replace!(node::Node, n1::Node, n2::Node,
     mbr_dirty && syncmbr!(par)
 
     con.tree.nnode_splits += 1
-    con.tree.nnodes_perlevel[level(node)+1] += 1
+    con.tree.nnodes_perlevel[level(node)] += 1
 
     # No registering necessary. insert!() will write the node if needed.
     #_register!(tree, node)

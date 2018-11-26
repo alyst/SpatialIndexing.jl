@@ -9,7 +9,7 @@ nelements(node::Branch) = sum(nelements, children(node))
 # * the MBR (should fit the MBR of children)
 function check(node::Node{T,N,V}, tree::RTree{T,N,V},
                nnodes_perlevel::AbstractVector{Int}, ids::Union{Set, Nothing}) where {T,N,V}
-    nnodes_perlevel[level(node) + 1] += 1
+    nnodes_perlevel[level(node)] += 1
     for (i, child) in enumerate(children(node))
         if node isa Branch
             child.parent === node ||
@@ -43,7 +43,7 @@ end
 function check(tree::RTree)
     tree.root.parent === nothing ||
         throw(SpatialIndexException("RTree: root has a parent"))
-    level(tree.root) + 1 == height(tree) ||
+    level(tree.root) == height(tree) ||
         throw(SpatialIndexException("RTree: root level ($(level(tree.root))) doesn't match tree height ($(height(tree)))"))
     length(tree.nnodes_perlevel) == height(tree) ||
         throw(SpatialIndexException("RTree: nnodes_perlevel length ($(length(tree.nnodes_perlevel))) doesn't match tree height ($(height(tree)))"))

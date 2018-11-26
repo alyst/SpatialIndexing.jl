@@ -4,13 +4,13 @@ using Printf: @sprintf
 
 # webcolor palette for R-tree levels
 const LevelsPalette = Dict(
-    0 => "#228B22", # Forest Green
-    1 => "#DAA520", # Goldenrod
-    2 => "#FF6347", # Tomato
-    3 => "#B22222", # Firebrick
-    4 => "#800080", # Purple
-    5 => "#4169E1", # Royal blue
-    6 => "#008080",) # Teal
+    1 => "#228B22", # Forest Green
+    2 => "#DAA520", # Goldenrod
+    3 => "#FF6347", # Tomato
+    4 => "#B22222", # Firebrick
+    5 => "#800080", # Purple
+    6 => "#4169E1", # Royal blue
+    7 => "#008080",) # Teal
 
 # create plotly trace for a single R-tree `node`
 function plotly_trace(node::SI.Node,
@@ -20,7 +20,7 @@ function plotly_trace(node::SI.Node,
     res = scatter(x = [nbr.low[1], nbr.high[1], nbr.high[1], nbr.low[1], nbr.low[1]],
                   y = [nbr.low[2], nbr.low[2], nbr.high[2], nbr.high[2], nbr.low[2]],
                   mode=:lines, line_color=get(LevelsPalette, SI.level(node), "#708090"),
-                  line_width=SI.level(node) + 1,
+                  line_width=SI.level(node),
                   hoverinfo=:text, hoveron=:points,
                   text="lev=$(SI.level(node)) ix=$(ix !== nothing ? ix : "none")<br>nchildren=$(length(node)) nelems=$(SI.nelements(node)) area=$(@sprintf("%.2f", SI.area(SI.mbr(node))))",
                   name="level $(SI.level(node))",

@@ -64,13 +64,12 @@ function load_omt!(tree::RTree, elems::AbstractVector;
     nroot_slices = floor(Int, sqrt(nroot_subtrees))
     #@show length(elems) leaf_fill branch_fill height maxelems_subtree nsubtrees nslices
     # sort by the center of the first dim
-    dim = mod1(height-1, ndims(tree)) # root level dimension
+    dim = mod1(height, ndims(tree)) # root level dimension
     elems_sorted = sort(elems, by = elem -> mbr(elem).low[dim] + mbr(elem).high[dim])
     resize!(tree.nnodes_perlevel, height)
     fill!(tree.nnodes_perlevel, 0)
-    tree.root = omt_subtree(elems_sorted, tree,
-                            height-1, nroot_slices, nroot_subtrees,
-                            leaf_fill, branch_fill)
+    tree.root = omt_subtree(elems_sorted, tree, height,
+                            nroot_slices, nroot_subtrees, leaf_fill, branch_fill)
     tree.nnodes_perlevel[end] = 1
     return tree
 end
@@ -83,11 +82,11 @@ function omt_subtree(elems::AbstractVector, tree::RTree,
                      lev::Integer, nslices::Integer, nsubtrees::Integer,
                      leaf_fill::Integer, branch_fill::Tuple{Integer, Integer})
     @debug "omt_subtree(): lev=$lev nslices=$nslices nsubtrees=$nsubtrees nelems=$(length(elems))"
-    @assert lev >= 0
+    @assert lev > 0
     if length(elems) <= nsubtrees
         # if fewer elements than the number of subtrees,
         # then all elements should be put into single leaf
-        if lev == 0 # create a Leaf and attach all elements
+        if lev == 1 # create a Leaf and attach all elements
             node = acquire(tree, Leaf, lev)
             for elem in elems
                 _attach!(node, elem, tree)
@@ -104,12 +103,12 @@ function omt_subtree(elems::AbstractVector, tree::RTree,
     end
 
     # subtree root
-    node = acquire(tree, lev > 0 ? Branch : Leaf, lev)
+    node = acquire(tree, lev > 1 ? Branch : Leaf, lev)
 
     # create subtrees
     nelems_subtree = fld1(length(elems), nsubtrees) # actual fill of the subtree
     nelems_slice = nelems_subtree * fld1(nsubtrees, nslices)
-    dim = mod1(lev - 1, ndims(tree)) # cycle sorting dimensions through tree levels
+    dim = mod1(lev, ndims(tree)) # cycle sorting dimensions through tree levels
     for i in 1:nelems_slice:length(elems) # slice using the external elements order (sort-dim of the level above)
         # sort the elements of the slice by the current dim
         elems_slice = sort(view(elems, i:min(i+nelems_slice-1, length(elems))),
@@ -118,11 +117,11 @@ function omt_subtree(elems::AbstractVector, tree::RTree,
         for j in 1:nelems_subtree:length(elems_slice)
             subtree_elems_range = j:min(j+nelems_subtree-1, length(elems_slice))
             child = omt_subtree(view(elems_slice, subtree_elems_range), tree,
-                                lev - 1, lev > 0 ? branch_fill[1] : 1,
-                                lev > 0 ? min(branch_fill[1] * branch_fill[2], capacity(Branch, tree)) : leaf_fill,
+                                lev - 1, lev > 1 ? branch_fill[1] : 1,
+                                lev > 1 ? min(branch_fill[1] * branch_fill[2], capacity(Branch, tree)) : leaf_fill,
                                 leaf_fill, branch_fill)
             _attach!(node, child, tree)
-            tree.nnodes_perlevel[lev] += 1
+            tree.nnodes_perlevel[lev - 1] += 1
         end
     end
     return node

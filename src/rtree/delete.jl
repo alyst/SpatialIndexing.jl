@@ -24,7 +24,7 @@ Base.delete!(tree::RTree{T,N}, pt::Point{T,N}, id::Any = nothing) where {T,N} =
 # (does not update the parent MBR)
 function delete_subtree!(tree::RTree, node::Node)
     @info "delete_subtree(): lev=$(level(node))"
-    _delete_subtree!(node, tree, level(node)+1)
+    _delete_subtree!(node, tree, level(node))
 end
 
 function _delete_subtree!(node::Node, tree::RTree, height::Integer)
@@ -39,8 +39,8 @@ function _delete_subtree!(node::Node, tree::RTree, height::Integer)
     @info "_delete_subtree(): empty children ($(length(node.children)) objs) of node lev=$(level(node)) parent=$(hasparent(node))"
     empty!(node.children)
     if hasparent(node) # remove the node
-        tree.nnodes_perlevel[level(node)+1] -= 1 # don't count this node anymore
-        if level(node) + 1 == height # this is the root of the deleted subtree, detach it from the parent
+        tree.nnodes_perlevel[level(node)] -= 1 # don't count this node anymore
+        if level(node) == height # this is the root of the deleted subtree, detach it from the parent
             _detach!(parent(node), pos_in_parent(node), tree)
             # FIXME propagate parent mbr updates (if required)
         end
@@ -117,7 +117,7 @@ function _subtract!(node::Node, node_ix::Int, reg::Region, tree::RTree,
         end
         if hasparent(node) && length(node) < floor(Int, tree.reinsert_factor * capacity(node, tree))
             _detach!(parent(node), node_ix, tree)
-            tree.nnodes_perlevel[level(node)+1] -= 1
+            tree.nnodes_perlevel[level(node)] -= 1
             push!(tmpdetached, node)
             return 2 # node removed
         elseif mbr_dirty

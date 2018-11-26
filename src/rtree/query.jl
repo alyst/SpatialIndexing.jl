@@ -69,7 +69,7 @@ function Base.iterate(tree::RTree)
     node = tree.root
     indices = fill(1, height(tree))
     # get the first leaf
-    while level(node) > 0
+    while level(node) > 1
         node = node[1]
     end
     state = RTreeIteratorState(node, indices)
@@ -83,16 +83,16 @@ function Base.iterate(tree::RTree, state::RTreeIteratorState)
     end
     # leaf iterations is done, go up until the first non-visited branch
     node = state.leaf
-    while state.indices[level(node) + 1] >= length(node)
+    while state.indices[level(node)] >= length(node)
         hasparent(node) || return nothing # returned to root, iteration finished
         node = parent(node)
     end
     # go down into the first leaf of the new subtree
-    ix = state.indices[level(node) + 1] += 1
+    ix = state.indices[level(node)] += 1
     node = node[ix]
     @inbounds while true
-        state.indices[level(node) + 1] = 1
-        level(node) == 0 && break
+        state.indices[level(node)] = 1
+        level(node) == 1 && break
         node = node[1]
     end
     new_state = RTreeIteratorState(node, state.indices)
@@ -193,9 +193,9 @@ function _iterate(iter::RTreeRegionQueryIterator, node::Node,
                   indices::AbstractVector{Int}, needtests::AbstractVector{Bool})
     #@debug"_iterate(): enter lev=$(level(node)) indices=$indices"
     @assert length(indices) == height(iter.tree)
-    ix = @inbounds(indices[level(node) + 1])
+    ix = @inbounds(indices[level(node)])
     while true
-        ix_new, queryres = _nextchild(node, ix, needtests[level(node)+1], iter)
+        ix_new, queryres = _nextchild(node, ix, needtests[level(node)], iter)
         #@debug "node=$(Int(Base.pointer_from_objref(node))) lev=$(level(node)) ix_new=$ix_new"
         if ix_new > length(node) # all node subtrees visited, go up one level
             while ix_new > length(node)
@@ -205,17 +205,17 @@ function _iterate(iter::RTreeRegionQueryIterator, node::Node,
                 end
                 #@debug "_iterate(): up lev=$(level(node)) indices=$indices ix_new=$ix_new"
                 node = parent(node)
-                @inbounds ix_new = indices[level(node) + 1] += 1 # next subtree
+                @inbounds ix_new = indices[level(node)] += 1 # next subtree
             end
             ix = ix_new
             #@debug "_iterate(): next subtree lev=$(level(node)) indices=$indices ix_new=$ix_new"
         else # subtree found
-            ix_new > ix && @inbounds(indices[level(node) + 1] = ix_new)
+            ix_new > ix && @inbounds(indices[level(node)] = ix_new)
             if node isa Branch
                 # go down into the first child
+                node = node[ix_new]
                 indices[level(node)] = ix = 1
                 needtests[level(node)] = queryres != QueryMatchComplete
-                node = node[ix_new]
                 #@debug "_iterate(): down lev=$(level(node)) indices=$indices"
             else # Leaf
                 #@debug "_iterate(): return lev=$(level(node)) indices=$indices"

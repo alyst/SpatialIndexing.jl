@@ -44,7 +44,7 @@ isequal_rtree(::Type{HasNoID}, el::Any, reg::Region, ::Nothing = nothing) =
     (mbr(el) == reg)
 
 """
-R-Tree leaf (level 0 node).
+R-Tree leaf (level 1 node).
 Its children are data elements of type `V`.
 """
 mutable struct Leaf{T,N,V} <: Node{T,N,V}
@@ -58,7 +58,7 @@ mutable struct Leaf{T,N,V} <: Node{T,N,V}
     end
 end
 
-level(node::Leaf) = 0 # always
+level(node::Leaf) = 1 # always
 
 function Base.setindex!(leaf::Leaf, el::Any, i::Integer)
     check_eltype_rtree(el)
@@ -66,7 +66,7 @@ function Base.setindex!(leaf::Leaf, el::Any, i::Integer)
 end
 
 """
-R-Tree node for levels above 0 (non-`Leaf`).
+R-Tree node for levels above 1 (non-`Leaf`).
 """
 mutable struct Branch{T,N,V} <: Node{T,N,V}
     parent::Union{Branch{T,N,V}, Nothing}
@@ -75,7 +75,7 @@ mutable struct Branch{T,N,V} <: Node{T,N,V}
     children::Union{Vector{Branch{T,N,V}},Vector{Leaf{T,N,V}}}
 
     function Branch{T,N,V}(parent::Union{Nothing, Branch{T,N,V}}, ::Type{C}) where {T,N,V, C<:Node{T,N,V}}
-        new{T,N,V}(parent, -1, empty(Rect{T,N}), Vector{C}())
+        new{T,N,V}(parent, 0, empty(Rect{T,N}), Vector{C}())
     end
 end
 
