@@ -30,7 +30,7 @@ syncmbr!(node::Node) =
 check_eltype_rtree(::Type{E}, ::Type{N}) where {N<:Node, E} =
     check_hasmbr(mbrtype(N), E)
 
-check_eltype_rtree_eltype(el::Any, node::Node) =
+check_eltype_rtree(el::Any, node::Node) =
     check_eltype_rtree(typeof(el), typeof(node))
 
 # equality check for R-tree elements (by MBR and, optionally, ID)
