@@ -6,7 +6,7 @@ Deletes the value identified by `br` bounding box (or point `pt`) and
 the `id` (if tree elements support `HasID` trait) from the `tree`.
 """
 function Base.delete!(tree::RTree{T,N}, br::Rect{T,N}, id::Any = nothing) where {T,N}
-    leafx = findleaf(tree, br, id)
+    leafx = findfirst(tree, br, id)
     leafx === nothing && __spatial_keyerror(eltype(tree), br, id)
     _detach!(leafx[1], leafx[2], tree)
     tmpdetached = Vector{nodetype(tree)}() # FIXME use pool, Union{Leaf,Branch} ?

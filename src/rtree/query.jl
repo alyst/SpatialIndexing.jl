@@ -1,9 +1,4 @@
-"""
-Find `Leaf` in the `node` subtree by the `id` and `br` MBR of one of its `Elem`s.
-
-Returns the tuple of `Leaf` and element position or `nothing`.
-"""
-function findleaf(node::Leaf{T,N}, reg::Region{T,N}, id::Any) where {T,N}
+function Base.findfirst(node::Leaf{T,N}, reg::Region{T,N}, id::Any) where {T,N}
     for (i, el) in enumerate(children(node))
         if isequal_rtree(el, reg, id)
             return (node, i)
@@ -12,10 +7,10 @@ function findleaf(node::Leaf{T,N}, reg::Region{T,N}, id::Any) where {T,N}
     return nothing
 end
 
-function findleaf(node::Branch{T,N,V}, reg::Region{T,N}, id::Any) where {T,N,V}
+function Base.findfirst(node::Branch{T,N,V}, reg::Region{T,N}, id::Any) where {T,N,V}
     for child in children(node)
         if contains(mbr(child), reg)
-            res = findleaf(child, reg, id)
+            res = findfirst(child, reg, id)
             if res !== nothing
                 return res::Tuple{Leaf{T,N,V}, Int}
             end
@@ -24,8 +19,16 @@ function findleaf(node::Branch{T,N,V}, reg::Region{T,N}, id::Any) where {T,N,V}
     return nothing
 end
 
-findleaf(rtree::RTree{T,N}, reg::Region{T,N}, id::Any = nothing) where {T,N} =
-    findleaf(rtree.root, reg, id)
+"""
+    findfirst(tree::RTree{T,N}, reg::Region{T,N}, [id]) where {T,N}
+
+Find the element in the `tree` by its region (`reg`) and, optionally, its `id`.
+The region (MBR) of the element and `reg` should match exactly.
+
+Returns the tuple of `Leaf` and position of the element or `nothing`.
+"""
+Base.findfirst(tree::RTree{T,N}, reg::Region{T,N}, id::Any = nothing) where {T,N} =
+    findfirst(tree.root, reg, id)
 
 # FIXME: currently isempty() doesn't allow specifying how
 #        to treat overlapping elements (inside or not), currently treated as outside

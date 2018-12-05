@@ -40,6 +40,10 @@ isequal_rtree(el::Any, reg::Region, id::Any = nothing) =
 isequal_rtree(::Type{<:HasID}, el::Any, reg::Region, key::Any) =
     isequal(id(el), convert(idtype(idtrait(typeof(el))), key)) && (mbr(el) == reg)
 
+# if the tree has IDs but `nothing` supplied, skip ID check
+isequal_rtree(::Type{<:HasID}, el::Any, reg::Region, ::Nothing = nothing) =
+    (mbr(el) == reg)
+
 isequal_rtree(::Type{HasNoID}, el::Any, reg::Region, ::Nothing = nothing) =
     (mbr(el) == reg)
 

@@ -97,7 +97,7 @@ function omt_subtree(elems::AbstractVector, tree::RTree,
             child = omt_subtree(elems, tree, lev - 1, nslices, nsubtrees,
                                 leaf_fill, branch_fill)
             node = _attach!(acquire(tree, Branch, lev), child, tree)
-            tree.nnodes_perlevel[lev-1] += 1
+            tree.nnodes_perlevel[lev - 1] += 1
             return node
         end
     end

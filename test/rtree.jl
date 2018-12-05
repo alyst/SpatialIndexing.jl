@@ -84,6 +84,22 @@ end
         @test length(collect(intersects_with(tree, SI.Rect((0.0, 0.0), (0.6, 0.6))))) == 2
         @test length(collect(contained_in(tree, SI.Rect((0.0, 0.0), (0.55, 0.55))))) == 1 # a only
         @test length(collect(intersects_with(tree, SI.Rect((0.0, 0.0), (0.55, 0.55))))) == 2 # a and c
+
+        @testset "findfirst()" begin
+            @test findfirst(tree, ambr, 2) === nothing
+            @test_throws MethodError findfirst(tree, ambr, "1") # wrong key type
+            @test_throws MethodError findfirst(tree, SI.empty(SI.Rect{Int,2}()))
+            @test findfirst(tree, ambr, 1) == (tree.root, 2)
+            @test findfirst(tree, ambr) == (tree.root, 2) # search without id ignores it
+            @test findfirst(tree, bmbr, 1) === nothing
+            @test findfirst(tree, bmbr, 2) == (tree.root, 1)
+            @test findfirst(tree, bmbr) == (tree.root, 1)
+            @test findfirst(tree, cmbr, 2) === nothing
+            @test findfirst(tree, cmbr, 3) == (tree.root, 3)
+            @test findfirst(tree, cmbr) == (tree.root, 3)
+            @test findfirst(tree, SI.combine(ambr, cmbr)) === nothing
+            @test findfirst(tree, SI.empty(SI.mbrtype(tree))) === nothing
+        end
     end
 
     @testset "RTree{Int,3,String,Nothing}(variant=$tree_var) (no id)" for tree_var in tree_vars
@@ -130,6 +146,20 @@ end
         @test delete!(tree, bmbr) === tree
         @test length(tree) == 1
         @test SI.check(tree)
+        @test insert!(tree, bmbr, "4") === tree
+        @test length(tree) == 2
+        @test SI.check(tree)
+
+        @testset "findfirst()" begin
+            @test_throws MethodError findfirst(tree, ambr, 2) # no key
+            @test_throws MethodError findfirst(tree, ambr, "1")
+            @test_throws MethodError findfirst(tree, SI.empty(SI.Rect{Int,2}()))
+            @test_throws MethodError findfirst(tree, SI.empty(SI.Rect{Float64,3}()))
+            @test findfirst(tree, ambr) == (tree.root, 1)
+            @test findfirst(tree, bmbr) == (tree.root, 2)
+            @test findfirst(tree, SI.combine(ambr, bmbr)) === nothing
+            @test findfirst(tree, SI.empty(SI.mbrtype(tree))) === nothing
+        end
     end
 end
 
@@ -157,10 +187,10 @@ end
         #@show SI.height(tree)
         #@show tree.nnodes_perlevel
 
-        @testset "findleaf" begin
+        @testset "findfirst()" begin
             # check that the elements can be found
             for i in 1:length(tree)
-                node_ix = SI.findleaf(tree.root, mbrs[i], i)
+                node_ix = findfirst(tree.root, mbrs[i], i)
                 @test node_ix !== nothing
                 if node_ix !== nothing
                     node, ix = node_ix
@@ -201,10 +231,10 @@ end
         @test_throws ArgumentError SI.load!(tree, enumerate(mbrs), method=:OMT,
                                             getid = x -> x[1], getmbr = x -> x[2], getval = x -> string(x[1]))
 
-        @testset "findleaf" begin
+        @testset "findfirst()" begin
             # check that the elements can be found
             for i in 1:length(tree)
-                node_ix = SI.findleaf(tree.root, mbrs[i], i)
+                node_ix = findfirst(tree.root, mbrs[i], i)
                 @test node_ix !== nothing
                 if node_ix !== nothing
                     node, ix = node_ix
@@ -235,7 +265,7 @@ end
         @test length(tree) == 3
         @test tree.nelem_deletions == 4
         for i in [3, 4, 7] # check that the correct points stayed in the tree
-            @test SI.findleaf(tree.root, SI.Rect(pts[i], pts[i]), i) !== nothing
+            @test findfirst(tree.root, SI.Rect(pts[i], pts[i]), i) !== nothing
         end
     end
 
