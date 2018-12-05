@@ -131,6 +131,19 @@ RTree{T,N}(::Type{V}; kwargs...) where {T,N,V} =
 RTree{T,N}(::Type{K}, ::Type{V}; kwargs...) where {T,N,K,V} =
     RTree{T,N,SpatialElem{T,N,K,V}}(; kwargs...)
 
+# create an empty R-tree of the same type and with the same settings as `tree`
+Base.similar(tree::RTree) =
+    typeof(tree)(variant=tree.variant,
+                 tight_mbrs=tree.tight_mbrs,
+                 branch_capacity=capacity(Branch, tree),
+                 leaf_capacity=capacity(Leaf, tree),
+                 leafpool_capacity=capacity(tree.leafpool),
+                 branchpool_capacity=capacity(tree.branchpool),
+                 nearmin_overlap=tree.nearmin_overlap,
+                 fill_factor=tree.fill_factor,
+                 splitdistribution_factor=tree.splitdistribution_factor,
+                 reinsert_factor=tree.reinsert_factor)
+
 mbrtype(::Type{<:RTree{T,N}}) where {T,N} = Rect{T,N}
 mbrtype(tree::RTree) = mbrtype(typeof(tree))
 regiontype(R::Type{<:RTree}) = mbrtype(R)

@@ -85,6 +85,11 @@ end
         @test length(collect(contained_in(tree, SI.Rect((0.0, 0.0), (0.55, 0.55))))) == 1 # a only
         @test length(collect(intersects_with(tree, SI.Rect((0.0, 0.0), (0.55, 0.55))))) == 2 # a and c
 
+        tree2 = similar(tree)
+        @test typeof(tree2) === typeof(tree)
+        @test tree2 !== tree
+        @test isempty(tree2)
+
         @testset "findfirst()" begin
             @test findfirst(tree, ambr, 2) === nothing
             @test_throws MethodError findfirst(tree, ambr, "1") # wrong key type
