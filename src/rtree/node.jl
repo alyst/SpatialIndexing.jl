@@ -60,11 +60,6 @@ end
 
 level(node::Leaf) = 1 # always
 
-function Base.setindex!(leaf::Leaf, el::Any, i::Integer)
-    check_eltype_rtree(el)
-    setindex!(children(node), child, i)
-end
-
 """
 R-Tree node for levels above 1 (non-`Leaf`).
 """
