@@ -223,18 +223,22 @@ end
         end
     end
 
-    @testset "bulk load" begin
+    @testset "load!() (OMT bulk load)" begin
         tree = RTree{SI.dimtype(eltype(mbrs)), ndims(eltype(mbrs))}(Int, String,
                                 leaf_capacity = 20, branch_capacity = 20)
         @test tree === SI.load!(tree, enumerate(mbrs), method=:OMT,
-                                getid = x -> x[1], getmbr = x -> x[2], getval = x -> string(x[1]))
+                                convertel = x -> eltype(tree)(x[2], x[1], string(x[1])))
         @test SI.check(tree)
         @test length(tree) == length(mbrs)
         #@show SI.height(tree)
         #@show tree.nnodes_perlevel
         # cannot bulk-load into non-empty tree
         @test_throws ArgumentError SI.load!(tree, enumerate(mbrs), method=:OMT,
-                                            getid = x -> x[1], getmbr = x -> x[2], getval = x -> string(x[1]))
+                                            convertel = x -> eltype(tree)(x[2], x[1], string(x[1])))
+        tree2 = similar(tree)
+        # can load from tree into another tree
+        @test SI.load!(tree2, tree) == tree2
+        @test length(tree2) == length(tree)
 
         @testset "findfirst()" begin
             # check that the elements can be found
@@ -257,9 +261,7 @@ end
         tree = RTree{Int, 2}(Int, String, leaf_capacity = 5, branch_capacity = 5)
         pts = [(0, 0), (1, 0), (2, 2), (2, 0), (0, 1), (1, 1), (-1, -1)]
         SI.load!(tree, enumerate(pts),
-                 getid = x -> x[1],
-                 getmbr = x -> SI.Rect(x[2], x[2]),
-                 getval = x -> string(x[1]))
+                 convertel = x -> eltype(tree)(SI.Rect(x[2], x[2]), x[1], string(x[1])))
         @test length(tree) == length(pts)
         @test SI.check(tree)
         rect = SI.Rect((0, 0), (1, 1))
@@ -280,7 +282,7 @@ end
         pts = [ntuple(_ -> 5. * randn(), 3) for _ in 1:1000]
         tree = RTree{Float64, 3}(Int, String, leaf_capacity = 10, branch_capacity = 10)
         SI.load!(tree, enumerate(pts),
-                 getid = x -> x[1], getmbr = x -> SI.Rect(x[2], x[2]), getval = x -> string(x[1]))
+                 convertel = x -> eltype(tree)(SI.Rect(x[2], x[2]), x[1], string(x[1])))
         @test length(tree) == length(pts)
         #@show tree.nelems tree.nnodes_perlevel
 

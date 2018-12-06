@@ -20,7 +20,7 @@ for (i, br) in enumerate(mbrs)
 end
 SI.check(seq_tree)
 
-SI.load!(bulk_tree, enumerate(mbrs), getid=x->x[1], getmbr=x->x[2], getval=x->string(x[1]))
+SI.load!(bulk_tree, enumerate(mbrs), convertel -> eltype(bulk_tree)(x[2], x[1], string(x[1])))
 SI.check(bulk_tree)
 
 include(joinpath(@__DIR__, "dataframe_utils.jl"))

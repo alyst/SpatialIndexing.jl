@@ -58,7 +58,7 @@ open(joinpath(@__DIR__, "pareto3d_rtree_seq.html"), "w") do io
 end
 
 bulk_pareto_tree = RTree{Float64, 3}(Int, String, leaf_capacity = 8, branch_capacity = 8)
-SI.load!(bulk_pareto_tree, collect(pareto_tree))
+SI.load!(bulk_pareto_tree, pareto_tree)
 SI.check(bulk_pareto_tree)
 
 bulk_pareto_tree_plot = plot(bulk_pareto_tree);

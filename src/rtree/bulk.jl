@@ -10,12 +10,25 @@ function omt_branch_fill(tree::RTree; fill_factor::Number=1.0) where T<:Node
 end
 
 """
-Bulk-load the `data` into `tree`.
+    load!(tree::RTree{T,N,V}, data::Any;
+          convertel = identity, method = :OMT,
+          leaf_fill = capacity(Leaf, tree),
+          branch_fill::Tuple{Integer, Integer} = omt_branch_fill(tree)) where {T,N,V}
+
+Bulk-load `data` into `tree`.
+  * `tree`: an *empty* R-tree for storing elements of type `V`
+  * `data`: iterable container with the elements to put into `tree`
+  * `convertel`: function to convert elements of `data` to type `V`
+  * `method`: bulk-loading method
+  * `leaf_fill`: the average number of elements to store in R-tree leaves (1-level nodes)
+  * `branch_fill`: the tuple of the number of slices and the number of subtrees per slice
+    in the R-tree nodes (level ≥ 1).
+
+The supported bulk-loading methods are:
+  * `:OMT`: *Overlap Minimizing Top-down method* by Taewon Lee and Sukho Lee
 """
 function load!(tree::RTree{T,N,V}, data::Any;
-               getmbr = first,
-               getid = idtrait(V) === HasNoID ? x -> nothing : x -> x[2],
-               getval = idtrait(V) === HasNoID ? x -> x[2] : x -> x[3],
+               convertel = identity,
                method::Symbol = :OMT,
                leaf_fill::Integer = capacity(Leaf, tree),
                branch_fill::Tuple{Integer, Integer} = omt_branch_fill(tree)) where {T, N, V}
@@ -25,27 +38,14 @@ function load!(tree::RTree{T,N,V}, data::Any;
         @warn "No bulk-load data provided"
         return tree
     end
-    # FIXME kwargs... doesn't work for some reason
-    return load!(tree, V[V(getmbr(x), getid(x), getval(x)) for x in data],
-                 method=method, leaf_fill=leaf_fill, branch_fill=branch_fill)
-end
-
-function load!(tree::RTree{T,N,V}, data::AbstractVector{V};
-               method::Symbol = :OMT,
-               leaf_fill::Integer = capacity(Leaf, tree),
-               branch_fill::Tuple{Integer, Integer} = omt_branch_fill(tree)) where {T,N,V}
-    isempty(tree) || throw(ArgumentError("Cannot bulk-load into non-empty tree"))
-    if isempty(data)
-        @warn "No bulk-load data provided"
-        return tree
-    end
     0 < leaf_fill <= capacity(Leaf, tree) ||
         throw(ArgumentError("Leaf fill should be positive and not exceed leaf capacity"))
     prod(branch_fill) > 1 || throw(ArgumentError("Branch fill should be > 1"))
     if method == :OMT
-        return load_omt!(tree, data, leaf_fill=leaf_fill, branch_fill=branch_fill)
+        return load_omt!(tree, V[convertel(x) for x in data],
+                         leaf_fill=leaf_fill, branch_fill=branch_fill)
     else
-        throw(ArgumentError("Unsupported bulk-loadaing method $method"))
+        throw(ArgumentError("Unsupported bulk-loading method $method"))
     end
 end
 
