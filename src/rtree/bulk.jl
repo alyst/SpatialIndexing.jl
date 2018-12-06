@@ -57,11 +57,16 @@ function load_omt!(tree::RTree, elems::AbstractVector;
                    leaf_fill::Integer = capacity(Leaf, tree),
                    branch_fill::Tuple{Integer, Integer} = omt_branch_fill(tree))
     # calculate the tree properties
-    nbranch_subtrees = min(branch_fill[1] * branch_fill[2], capacity(Leaf, tree))
-    height = ceil(Int, max(log(length(elems)) - log(leaf_fill), 0.0) / log(nbranch_subtrees)) + 1 # 1 for leaves
-    maxelems_subtree = leaf_fill*nbranch_subtrees^(height-2) # max elements in each root subtree
-    nroot_subtrees = fld1(length(elems), maxelems_subtree)
-    nroot_slices = floor(Int, sqrt(nroot_subtrees))
+    nbranch_subtrees = min(branch_fill[1] * branch_fill[2], capacity(Branch, tree))
+    height = max(ceil(Int, (log(length(elems)) - log(leaf_fill)) / log(nbranch_subtrees)), 0) + 1 # 1 for leaves
+    if height > 1
+        maxelems_subtree = leaf_fill*nbranch_subtrees^(height-2) # max elements in each root subtree
+        nroot_subtrees = fld1(length(elems), maxelems_subtree)
+        nroot_slices = floor(Int, sqrt(nroot_subtrees))
+    else # root === single leaf
+        maxelems_subtree = nroot_subtrees = length(elems)
+        nroot_slices = 1
+    end
     #@show length(elems) leaf_fill branch_fill height maxelems_subtree nsubtrees nslices
     # sort by the center of the first dim
     dim = mod1(height, ndims(tree)) # root level dimension
