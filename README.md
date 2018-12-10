@@ -34,7 +34,7 @@ and deletions).
   * `insert!(tree, item)`, `delete!(tree, item)` for element-wise insertion and deletion
   * bulk-loading of data using Overlap-minimizing Top-down (OMT) approach (`load!(tree, data)`)
   * `subtract!(tree, reg)` for removing data within specified region `reg`
-  * `contained_in(tree, reg)` and `intersects_with(tree, reg)` spatial queries
+  * `findfirst(tree, reg, [id])`, `contained_in(tree, reg)` and `intersects_with(tree, reg)` spatial queries
 
 ## Simple Spatial Index
 
