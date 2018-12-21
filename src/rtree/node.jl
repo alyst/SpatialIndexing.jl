@@ -13,9 +13,9 @@ mbr(node::Node) = node.mbr
 parent(node::Node) = node.parent
 hasparent(node::Node) = node.parent !== nothing
 children(node::Node) = node.children
-Base.isempty(node::Node) = isempty(children(node))
-Base.length(node::Node) = length(children(node))
-Base.getindex(node::Node, i::Integer) = getindex(children(node), i)
+@inline Base.isempty(node::Node) = isempty(children(node))
+@inline Base.length(node::Node) = length(children(node))
+@inline Base.getindex(node::Node, i::Integer) = getindex(children(node), i)
 
 # `node` position among its siblings in `children` vector of the parent or nothing
 pos_in_parent(node::Node) =
