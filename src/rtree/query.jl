@@ -40,7 +40,7 @@ Check if there are `tree` elements inside `region`.
 Base.isempty(tree::RTree{T,N}, region::Region{T,N}) where {T,N} =
     _isempty(tree.root, region)
 
-function _isempty(node::Node, region::Region{T,N}) where {T,N}
+function _isempty(node::Node, region::Region)
     isempty(node) && return true
     nodebr = mbr(node)
     if in(nodebr, region) # there are elements inside rect
