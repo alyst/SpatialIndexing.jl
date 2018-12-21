@@ -60,9 +60,10 @@ function find_least_enlargement(node::Node, br::Rect)
     min_enl = Inf
     best_ix = 0
     best_area = Inf
-    for (i, child) in enumerate(children(node))
-        child_area = area(mbr(child))
-        enl = combined_area(mbr(child), br) - child_area
+    for i in eachindex(children(node))
+        child_mbr = mbr(@inbounds node[i])
+        child_area = area(child_mbr)
+        enl = combined_area(child_mbr, br) - child_area
         if enl < min_enl || (min_enl == enl && child_area < best_area)
             min_enl = enl
             best_area = child_area
