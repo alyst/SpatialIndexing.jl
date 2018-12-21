@@ -158,6 +158,11 @@ function _split!_rtree(node::Node, tree::RTree)
     return n1, n2
 end
 
+# get low/high of a specific MBR dimension
+# accessor functions to speedup sortperm!()
+_mbr_low(node, dim::Integer) = @inbounds mbr(node).low[dim]
+_mbr_high(node, dim::Integer) = @inbounds mbr(node).high[dim]
+
 # R*-star node split
 function _split!_rstar(node::Node, tree::RTree)
     nsplit = floor(Int, length(node) * tree.splitdistribution_factor)
@@ -173,17 +178,17 @@ function _split!_rstar(node::Node, tree::RTree)
     highorder = similar(loworder)
     use_low = false
     for dim in 1:ndims(node)
-        sortperm!(loworder, children(node), by=child -> mbr(child).low[dim])
-        sortperm!(highorder, children(node), by=child -> mbr(child).high[dim])
+        sortperm!(loworder, children(node), by=Base.Fix2(_mbr_low, dim))
+        sortperm!(highorder, children(node), by=Base.Fix2(_mbr_high, dim))
 
         # calculate the sum of perimiters for all splits
         low_perim = 0.0
         high_perim = 0.0
         for i in nsplit:(nsplit + nsplit_distr)
-            @inbounds br_low1 = mapreduce(i -> mbr(node[loworder[i]]), combine, 1:i)
-            @inbounds br_high1 = mapreduce(i -> mbr(node[highorder[i]]), combine, 1:i)
-            @inbounds br_low2 = mapreduce(i -> mbr(node[loworder[i]]), combine, (i+1):length(node))
-            @inbounds br_high2 = mapreduce(i -> mbr(node[highorder[i]]), combine, (i+1):length(node))
+            @inbounds br_low1 = mapreduce(j -> @inbounds(mbr(node[j])), combine, view(loworder, 1:i))
+            @inbounds br_high1 = mapreduce(j -> @inbounds(mbr(node[j])), combine, view(highorder, 1:i))
+            @inbounds br_low2 = mapreduce(j -> @inbounds(mbr(node[j])), combine, view(loworder, (i+1):length(node)))
+            @inbounds br_high2 = mapreduce(j -> @inbounds(mbr(node[j])), combine, view(highorder, (i+1):length(node)))
 
             low_perim += perimeter(br_low1) + perimeter(br_low2)
             high_perim += perimeter(br_high1) + perimeter(br_high2)
@@ -199,8 +204,8 @@ function _split!_rstar(node::Node, tree::RTree)
 
     # final sorting
     selorder = use_low ?
-        sortperm!(loworder, children(node), by = node -> mbr(node).low[split_dim]) :
-        sortperm!(highorder, children(node), by = node -> mbr(node).high[split_dim])
+        sortperm!(loworder, children(node), by=Base.Fix2(_mbr_low, split_dim)) :
+        sortperm!(highorder, children(node), by=Base.Fix2(_mbr_high, split_dim))
 
     # find the best split point (minimizes split overlap and area)
     min_overlap = Inf
