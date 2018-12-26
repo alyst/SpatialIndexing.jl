@@ -165,7 +165,7 @@ _mbr_high(node, dim::Integer) = @inbounds mbr(node).high[dim]
 
 # R*-star node split
 function _split!_rstar(node::Node, tree::RTree)
-    nsplit = floor(Int, length(node) * tree.splitdistribution_factor)
+    nsplit = floor(Int, length(node) * tree.split_factor)
     nsplit_distr = length(node) - 2 * nsplit + 1
     @assert nsplit_distr > 0
 

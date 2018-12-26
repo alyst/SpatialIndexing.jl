@@ -57,7 +57,7 @@ The behaviour of `RTree` is defined by the parameters supplied at its creation:
   * `branchpool_capacity`: How many other (level > 2) detached branch nodes should be kept for reuse (default is `100`)
   * `nearmin_overlap`: How many candidates to consider when identifying the node with minimal overlap (default is `32`)
   * `fill_factor`: How much should the node be filled (fraction of its capacity) after splitting (default is `0.7`)
-  * `splitdistribution_factor`: How much can the sizes of the two nodes differ after splitting (default is `0.4`)
+  * `split_factor`: How much can the sizes of the two nodes differ after splitting (default is `0.4`)
   * `reinsert_factor`: How much should the node be underfilled (fraction of its capacity)
     to consider removing it and redistributing its children to other nodes (default is `0.3`)
 
@@ -83,7 +83,7 @@ mutable struct RTree{T,N,V} <: SpatialIndex{T,N,V}
 
     nearmin_overlap::Int
     fill_factor::Float64
-    splitdistribution_factor::Float64
+    split_factor::Float64
     reinsert_factor::Float64
 
     root::Node{T,N}     # root node
@@ -108,14 +108,14 @@ mutable struct RTree{T,N,V} <: SpatialIndex{T,N,V}
         branchpool_capacity::Integer = 100,
         nearmin_overlap::Integer = floor(Int, 0.32 * leaf_capacity),
         fill_factor::Real = 0.7,
-        splitdistribution_factor::Real = 0.4,
+        split_factor::Real = 0.4,
         reinsert_factor::Real = 0.3
     ) where {T<:Number,N,V}
         check_eltype_rtree(V, Leaf{T,N,V})
         leafpool = LeafPool{T,N,V}(leafpool_capacity, leaf_capacity)
         new{T,N,V}(variant, tight_mbrs,
                    nearmin_overlap, fill_factor,
-                   splitdistribution_factor, reinsert_factor,
+                   split_factor, reinsert_factor,
                    acquire!(leafpool),
                    0, [1], # init with 1 leaf == parent
                    0, 0, 0, 0,
@@ -141,7 +141,7 @@ Base.similar(tree::RTree) =
                  branchpool_capacity=capacity(tree.branchpool),
                  nearmin_overlap=tree.nearmin_overlap,
                  fill_factor=tree.fill_factor,
-                 splitdistribution_factor=tree.splitdistribution_factor,
+                 split_factor=tree.split_factor,
                  reinsert_factor=tree.reinsert_factor)
 
 mbrtype(::Type{<:RTree{T,N}}) where {T,N} = Rect{T,N}
