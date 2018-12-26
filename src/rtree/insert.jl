@@ -46,7 +46,7 @@ function _insert!(node::Node, child::Any, con::SubtreeContext)
 end
 
 function _insert!(con::SubtreeContext, node::Any, lev::Integer)
-    #@debug "_insert!(con): len=$(length(con.tree)) node_lev=$(node isa Node ? level(node) : "data") node_len=$(node isa Node ? length(node) : "data")"
+    #@debug "_insert!(con): len=$(length(con.tree)) node_lev=$(node isa Node ? level(node) : 0) node_len=$(node isa Node ? length(node) : 0)"
     par = choose_subtree(con.tree.root, lev, mbr(node), con.tree)
     @assert level(par) == lev
     _insert!(par, node, con)
