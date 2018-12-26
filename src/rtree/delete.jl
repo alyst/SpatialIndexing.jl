@@ -114,7 +114,12 @@ function _subtract!(node::Node, node_ix::Int, reg::Region, tree::RTree,
         if hasparent(node) && length(node) < floor(Int, tree.reinsert_factor * capacity(node, tree))
             _detach!(parent(node), node_ix, tree)
             tree.nnodes_perlevel[level(node)] -= 1
-            push!(tmpdetached, node)
+            if isempty(node)
+                #@debug "Releasing empty node (lv=$(level(node)))"
+                release(tree, node)
+            else
+                push!(tmpdetached, node)
+            end
             return 2 # node removed
         elseif mbr_dirty
             syncmbr!(node)
