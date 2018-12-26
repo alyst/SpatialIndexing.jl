@@ -66,12 +66,8 @@ function subtract!(tree::RTree{T,N}, reg::Region{T,N}) where {T,N}
     tmpdetached = Vector{nodetype(tree)}()
     status = _subtract!(tree.root, 0, reg, tree, tmpdetached)
     #@debug "subtract!(): status=$(status) tmpdetached=$(length(tmpdetached))"
-    if status == 1 # tree changed, but not removed
+    if status > 0 # tree changed
         _condense!(tree.root, tree, tmpdetached) # try to condense the root
-    elseif status == 2 # whole tree removed (contained in reg)
-        # should have no items and nothing to reinsert
-        @assert isempty(tree)
-        @assert isempty(tmpdetached)
     end
     _reinsert!(tree, tmpdetached)
     return tree
