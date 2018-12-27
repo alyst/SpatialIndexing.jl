@@ -1,5 +1,5 @@
 nelements(node::Leaf) = length(node)
-nelements(node::Branch) = sum(nelements, children(node))
+nelements(node::Branch) = mapreduce(nelements, +, children(node), init=0)
 
 # check the R-tree node (branch or leaf):
 # * the parent
