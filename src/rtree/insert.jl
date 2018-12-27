@@ -139,7 +139,7 @@ end
 
 # choose the node (for inserting the given mbr at specified level)
 function choose_subtree(node::Node, lev::Int, br::Rect, tree::RTree)
-    while level(node) != lev
+    while level(node) > lev
         if variant(tree) == RTreeLinear || variant(tree) == RTreeQuadratic
             child_ix = find_least_enlargement(node, br)
         elseif variant(tree) == RTreeStar
@@ -151,7 +151,8 @@ function choose_subtree(node::Node, lev::Int, br::Rect, tree::RTree)
         end
         node = node[child_ix]
     end
-    @assert level(node) == lev
+    level(node) == lev ||
+        throw(SpatialIndexException("Couldn't find the node of level $lev in RTree of height $(height(tree))"))
     return node
 end
 
