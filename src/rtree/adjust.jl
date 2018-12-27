@@ -57,6 +57,7 @@ function _reinsert!(tree::RTree, detached::AbstractVector{<:Node})
     @debug "_reinsert!(): reinsert children of $(length(detached)) detached nodes"
     isempty(detached) && return tree
     con = SubtreeContext(tree)
+    sort!(detached, by=level, rev=true) # start with the highest nodes
     for node in detached
         for child in children(node)
             _insert!(con, child, level(node))
