@@ -2,7 +2,7 @@
 # accumulate the nodes that are temporary detached and need to be reinserted in `tmpdetached`
 function _condense!(node::Node, tree::RTree, tmpdetached::AbstractVector{<:Node})
     min_load = floor(Int, capacity(node, tree) * tree.fill_factor)
-    @debug "_condense!() lev=$(level(node)) len=$(length(node)) to_reinsert=$(length(to_reinsert)) min_load=$min_load"
+    @debug "_condense!() lev=$(level(node)) len=$(length(node)) tmpdetached=$(length(tmpdetached)) min_load=$min_load"
 
     if node === tree.root
         # eliminate root if it has only one child.
