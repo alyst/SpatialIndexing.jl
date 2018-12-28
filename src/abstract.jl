@@ -65,14 +65,31 @@ querykind(iter::SpatialQueryIterator) = querykind(typeof(iter))
 
 # arbitrary spatial elements support
 
-# Type trait for supporting id() method
-abstract type HasID{T} end
+"""
+Type trait for checking `id()` method support.
+If type `V` has this trait (`idtype(V)` returns `HasID{K}`),
+then `id(v::V)` should return a unique identifier for `v` of type `K`.
+If `V` doesn't have this trait, `idtype(V)` returns `HasNoID`.
+
+If available, `SpatialIndex{T,N,V}` uses unique identifiers of `V`
+alongside spatial indexing.
+"""
+abstract type HasID{K} end
 abstract type HasNoID end
 idtrait(::Type) = HasNoID
-idtype(::Type{HasID{T}}) where T = T
+idtype(::Type{HasID{K}}) where K = K
 idtype(::Type{HasNoID}) = Union{}
 
-# Type trait for supporting mbr() method
+"""
+Type trait for checking `mbr()` method support.
+If type `V` has this trait (`mbrtype(V)` returns `HasMBR{Rect{T,N}}`),
+then `mbr(v::V)` should return a minimal bounding rectangle (MBR) `Rect{T,N}`
+that contains `v`.
+If `V` doesn't have this trait, `mbrtype(V)` returns `HasNoMBR`.
+
+`SpatialIndex{T,N,V}` *requires* that `V` provides `mbr()` method that
+returns `Rect{T,N}`.
+"""
 abstract type HasMBR{T} end
 abstract type HasNoMBR end
 mbrtrait(::Type) = HasNoMBR
@@ -102,7 +119,7 @@ end
 
 """
 Simple `N`-dimensional spatial data element that stores values of type `V`
-and supports `HasMBR` and `HasID{K}` (if `K` is not `Nothing`) traits.
+and supports `HasMBR{Rect{T,N}}` and `HasID{K}` (if `K` is not `Nothing`) traits.
 """
 struct SpatialElem{T,N,K,V}
     mbr::Rect{T,N}
