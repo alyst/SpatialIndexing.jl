@@ -16,9 +16,8 @@ struct Point{T, N} <: Region{T, N}
     coord::NTuple{N, T}
 end
 
-# "empty" (uninitialized) points
 """
-    empty(::Type{T}) where T<:<:Region
+    empty(::Type{T}) where T<:Region
 
 Generate empty (uninitialized) region of type `T`.
 """
@@ -30,12 +29,12 @@ empty(::Type{Point{T,N}}) where {T<:Integer,N} =
 """
     area(a::Region{T,N}) where {T,N}
 
-`N`-dimensional area (volume etc) of `a`.
+`N`-dimensional "area" (volume etc) of `a`.
 """
 area(a::Point{T}) where T = zero(typeof(zero(T)*zero(T)))
 
 """
-    perimeter(a::Region{T,N}) where {T,N}
+    perimeter(a::Region)
 
 The sum of the `a` sides.
 """
@@ -71,7 +70,7 @@ empty(::Type{Rect{T,N}}) where {T<:Integer,N} =
 """
     combine(a::Region{T,N}, b::Region{T,N}) where {T,N}
 
-MBR of the two regions.
+MBR that contains both `a` and `b` regions.
 """
 combine(a::Rect{T,N}, b::Rect{T,N}) where {T,N} =
     @inbounds Rect{T,N}(ntuple(i -> min(a.low[i], b.low[i]), N),
