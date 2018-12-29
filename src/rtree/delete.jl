@@ -24,32 +24,32 @@ Base.delete!(tree::RTree{T,N}, pt::Point{T,N}, id::Any = nothing) where {T,N} =
 # (does not update the parent MBR)
 function delete_subtree!(tree::RTree, node::Node)
     #@debug "delete_subtree(): lev=$(level(node))"
-    _delete_subtree!(node, tree, level(node))
+    _release_descendants!(tree, node)
+
+    if hasparent(node) # remove the node from the parent
+        tree.nnodes_perlevel[level(node)] -= 1 # don't count this node anymore
+        _detach!(parent(node), pos_in_parent(node), tree)
+        release(tree, node)
+        # FIXME propagate parent mbr updates (if required)
+    else # root node just stays empty
+        node.mbr = empty(mbrtype(node))
+    end
 end
 
-function _delete_subtree!(node::Node, tree::RTree, height::Integer)
+# recursively release all `node` descendants to the pool
+function _release_descendants!(tree::RTree, node::Node)
     if node isa Branch
         for child in children(node)
-            _delete_subtree!(child, tree, height)
+            _release_descendants!(tree, child)
+            release(tree, child)
         end
+        # update nodes counts
+        tree.nnodes_perlevel[level(node)-1] -= length(node)
     elseif node isa Leaf
         tree.nelems -= length(node)
         tree.nelem_deletions += length(node)
     end
-    #@debug "_delete_subtree(): empty children ($(length(node.children)) objs) of node lev=$(level(node)) parent=$(hasparent(node))"
-    empty!(node.children)
-    if hasparent(node) # remove the node
-        tree.nnodes_perlevel[level(node)] -= 1 # don't count this node anymore
-        if level(node) == height # this is the root of the deleted subtree, detach it from the parent
-            _detach!(parent(node), pos_in_parent(node), tree)
-            # FIXME propagate parent mbr updates (if required)
-        end
-        release(tree, node)
-    else # root node just stays empty
-        node.mbr = empty(mbrtype(node))
-    end
-    #@debug "_delete_subtree(): done node lev=$(level(node)) parent=$(hasparent(node))"
-    return nothing
+    #@debug "_release_descendants(): done node lev=$(level(node)) parent=$(hasparent(node))"
 end
 
 # FIXME replace `region` with a more generic `filter`
