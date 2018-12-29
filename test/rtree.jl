@@ -293,6 +293,24 @@ end
         @test tree.nelem_deletions == n_in_rect
         #@show tree.nelems tree.nnodes_perlevel tree.nelem_deletions tree.nelem_insertions
     end
+
+    # test how well the R-tree can stand the deletion of all but a single element for various tree sizes
+    @testset "subtract!() removing all but single point" begin
+        Random.seed!(32123)
+        pts = [ntuple(_ -> rand(), 2) for _ in 1:200]
+        reftree = RTree{Float64, 2}(Int, String, leaf_capacity = 5, branch_capacity = 5)
+        loner = eltype(reftree)(SI.Rect((5.0, 5.0), (5.0, 5.0)), 0, "loner")
+        @testset "removing $n points" for (n, pt) in enumerate(pts)
+            insert!(reftree, eltype(reftree)(SI.Rect(pt, pt), n, string(n)))
+            tree = deepcopy(reftree)
+            insert!(tree, loner)
+            @test length(tree) == n + 1
+            SI.subtract!(tree, SI.Rect((0.0, 0.0), (1.0, 1.0)))
+            @test length(tree) == 1
+            @test SI.check(tree)
+            @test SI.id(first(tree)) == 0
+        end
+    end
 end
 
 end
