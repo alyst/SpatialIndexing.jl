@@ -165,18 +165,13 @@ capacity(::T, tree::RTree) where T<:Node = capacity(T, tree)
 capacity(::Type{<:Leaf}, tree::RTree) = node_capacity(tree.leafpool)
 capacity(::Type{<:Branch}, tree::RTree) = node_capacity(tree.branchpool)
 
+# acquire Leaf/Branch from the corresponding node pool
 function acquire(tree::RTree, ::Type{<:Leaf}, lev::Int = 1, br::Rect = empty(mbrtype(tree)))
     @assert lev == 1
     leaf = acquire!(tree.leafpool)
     @assert isempty(leaf)
     leaf.mbr = br
     return leaf
-end
-
-function release(tree::RTree, node::Leaf)
-    node.parent = nothing # don't refer to the parent (so it could be GCed)
-    empty!(node.children) # don't refer to the children (so they could be GCed)
-    release!(tree.leafpool, node)
 end
 
 function acquire(tree::RTree, ::Type{<:Branch}, lev::Int, br::Rect = empty(regiontype(tree)))
@@ -188,9 +183,16 @@ function acquire(tree::RTree, ::Type{<:Branch}, lev::Int, br::Rect = empty(regio
     return node
 end
 
-function release(tree::RTree, node::Branch)
+# detach the Leaf/Branch from the tree and release it to the corresponding node pool
+# it's up to the calling context to take care of the R-tree integrity (parent and children nodes)
+function release(tree::RTree, node::Node)
+    node.parent = nothing # don't refer to the parent (so it could be GCed)
     empty!(node.children) # don't refer to the children (so they could be GCed)
-    release!(eltype(node.children) <: Leaf ? tree.twigpool : tree.branchpool, node)
+    if node isa Leaf
+        release!(tree.leafpool, node)
+    else
+        release!(eltype(node.children) <: Leaf ? tree.twigpool : tree.branchpool, node)
+    end
 end
 
 # low-level insertion of a child into the back of the list of the node children
