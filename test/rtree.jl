@@ -311,6 +311,38 @@ end
             @test SI.id(first(tree)) == 0
         end
     end
+
+    @testset "subtract!() removing n<=N central nodes" begin
+        Random.seed!(32123)
+        pts = [ntuple(_ -> 2rand()-1, 3) for _ in 1:200]
+        # the test implies that all pts have different distances to the origin
+        sort!(pts, by = pt -> maximum(abs, pt))
+        reftree = RTree{Float64, 3}(Int, String, leaf_capacity = 5, branch_capacity = 5)
+        SI.load!(reftree, enumerate(pts),
+                 convertel = x -> eltype(reftree)(SI.Rect(x[2], x[2]), x[1], string(x[1])))
+        corembr = SI.Rect((0.0, 0.0, 0.0), (0.0, 0.0, 0.0))
+        tree1 = deepcopy(reftree)
+        @test length(tree1) == length(reftree)
+        @testset "removing $n points" for (n, pt) in enumerate(pts)
+            corembr = SI.combine(corembr, SI.Rect(pt, pt))
+
+            # subtracting centrermbr from tree1 removes just 1 point
+            @test length(tree1) == length(reftree) - n + 1
+            tree1_to_remove = collect(contained_in(tree1, corembr))
+            @test length(tree1_to_remove) == 1
+            @test SI.id(first(tree1_to_remove)) == n
+
+            SI.subtract!(tree1, corembr)
+            @test length(tree1) == length(reftree) - n
+            @test SI.check(tree1)
+
+            # subtracting centrermbr from tree2 removes n points
+            tree2 = deepcopy(reftree)
+            SI.subtract!(tree2, corembr)
+            @test length(tree2) == length(reftree) - n
+            @test SI.check(tree2)
+        end
+    end
 end
 
 end
