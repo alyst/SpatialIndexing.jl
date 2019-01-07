@@ -47,7 +47,7 @@ Specifies the kind of spatial data query.
 """
 Specifies the result of spatial data query.
 """
-@enum QueryMatch::Int QueryNoMatch=0 QueryMatchPartial=1 QueryMatchComplete=2 
+@enum QueryMatch::Int QueryNoMatch=0 QueryMatchPartial=1 QueryMatchComplete=2
 
 """
 Base abstract class for implementing spatial queries in `N`-dimensional space.
