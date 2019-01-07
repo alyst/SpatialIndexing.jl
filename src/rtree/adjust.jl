@@ -6,27 +6,25 @@ function _condense!(node::Node, tree::RTree, tmpdetached::AbstractVector{<:Node}
 
     if node === tree.root
         # eliminate root if it has only one child.
-        if level(node) > 1
-            if length(node) == 1
-                @debug "_condense!(): shrinking single-child root"
-                tree.root = node[1]
-                tree.root.parent = nothing
-                release(tree, node)
-                pop!(tree.nnodes_perlevel) # tree became 1 level shorter
-            elseif isempty(node)
-                @debug "_condense!(): resetting empty root"
-                # reset the root to a node of minimal level to accomodate the children of tmpdetached (or leaf)
-                root_level = mapreduce(level, max, tmpdetached, init=1)
-                tree.root = acquire(tree, root_level == 1 ? Leaf : Branch, root_level)
-                resize!(tree.nnodes_perlevel, root_level)
-                fill!(tree.nnodes_perlevel, 0)
-                tree.nnodes_perlevel[end] = 1
-            else
-                # due to data removal.
-                tree.tight_mbrs && syncmbr!(node)
-            end
-        else
-            # due to data removal.
+        old_root = tree.root
+        min_root_level = mapreduce(level, max, tmpdetached, init=1)
+        while (level(node) > min_root_level) && (length(node) == 1)
+            #@debug "_condense!(): shrinking single-child root (lv=$(level(node)))"
+            tree.root = node[1]
+            tree.root.parent = nothing
+            release(tree, node)
+            pop!(tree.nnodes_perlevel) # tree became 1 level shorter
+            node = tree.root
+        end
+        if (level(node) >= min_root_level) && isempty(node)
+            #@debug "_condense!(): resetting empty root (lv=$(level(node)))"
+            # reset the root to a node of minimal level to accomodate the children of tmpdetached (or leaf)
+            tree.root = acquire(tree, min_root_level == 1 ? Leaf : Branch, min_root_level)
+            resize!(tree.nnodes_perlevel, min_root_level)
+            fill!(tree.nnodes_perlevel, 0)
+            tree.nnodes_perlevel[end] = 1
+        elseif node === old_root
+            # root didn't change, but MBR has to be updated due to data removal.
             tree.tight_mbrs && syncmbr!(node)
         end
         return node
