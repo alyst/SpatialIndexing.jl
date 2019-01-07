@@ -33,6 +33,7 @@ function delete_subtree!(tree::RTree, node::Node)
         # FIXME propagate parent mbr updates (if required)
     else # root node just stays empty
         node.mbr = empty(mbrtype(node))
+        empty!(node.children)
     end
 end
 
