@@ -174,7 +174,7 @@ function acquire(tree::RTree, ::Type{<:Leaf}, lev::Int = 1, br::Rect = empty(mbr
     return leaf
 end
 
-function acquire(tree::RTree, ::Type{<:Branch}, lev::Int, br::Rect = empty(regiontype(tree)))
+function acquire(tree::RTree, ::Type{<:Branch}, lev::Int, br::Rect = empty(mbrtype(tree)))
     @assert lev > 1
     node = acquire!(lev == 2 ? tree.twigpool : tree.branchpool)
     @assert isempty(node)
