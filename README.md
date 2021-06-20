@@ -1,7 +1,7 @@
 SpatialIndexing.jl
 ==============
 
-[![Build Status](https://travis-ci.org/alyst/SpatialIndexing.jl/workflows/CI/badge.svg)](https://github.com/alyst/SpatialIndexing.jl/actions?query=worflow%3ACI+branch%3Amaster)
+[![Build Status](https://github.com/alyst/SpatialIndexing.jl/workflows/CI/badge.svg)](https://github.com/alyst/SpatialIndexing.jl/actions?query=worflow%3ACI+branch%3Amaster)
 [![codecov](https://codecov.io/gh/alyst/SpatialIndexing.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/alyst/SpatialIndexing.jl)
 
 `SpatialIndexing` package provides the tools for efficient in-memory indexing of
