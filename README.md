@@ -1,8 +1,8 @@
 SpatialIndexing.jl
 ==============
 
-[![Build Status](https://travis-ci.org/alyst/SpatialIndexing.jl.svg?branch=master)](https://travis-ci.org/alyst/SpatialIndexing.jl)
-[![Coverage Status](https://coveralls.io/repos/github/alyst/SpatialIndexing.jl/badge.svg?branch=master)](https://coveralls.io/github/alyst/SpatialIndexing.jl?branch=master)
+[![Build Status](https://travis-ci.org/alyst/SpatialIndexing.jl/workflows/CI/badge.svg)](https://github.com/alyst/SpatialIndexing.jl/actions?query=worflow%3ACI+branch%3Amaster)
+[![codecov](https://codecov.io/gh/alyst/SpatialIndexing.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/alyst/SpatialIndexing.jl)
 
 `SpatialIndexing` package provides the tools for efficient in-memory indexing of
 spatial data in Julia (http://julialang.org/).
