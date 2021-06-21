@@ -27,7 +27,7 @@ empty(::Type{Point{T,N}}) where {T<:Integer,N} =
     Point{T,N}(ntuple(_ -> zero(T), N))
 
 """
-    area(a::Region{T,N}) where {T,N}
+    area(a::Region)
 
 `N`-dimensional "area" (volume etc) of `a`.
 """
@@ -68,7 +68,7 @@ empty(::Type{Rect{T,N}}) where {T<:Integer,N} =
     Rect{T,N}(ntuple(_ -> typemax(T), N), ntuple(_ -> typemax(T), N))
 
 """
-    combine(a::Region{T,N}, b::Region{T,N}) where {T,N}
+    combine(a::Region, b::Region)
 
 MBR that contains both `a` and `b` regions.
 """
@@ -82,6 +82,11 @@ combine(a::Rect{T,N}, b::Rect{T,N}) where {T,N} =
         Base.Cartesian.@nall $N i -> !isnan(a.low[i]) && !isnan(a.high[i]) && a.low[i] <= a.high[i]
     end
 
+"""
+    intersect(a::Region, b::Region)
+
+MBR that is an intersection of `a` and `b` regions.
+"""
 function intersect(a::Rect{T,N}, b::Rect{T,N}) where {T,N}
     res = @inbounds Rect{T,N}(ntuple(i -> max(a.low[i], b.low[i]), N),
                               ntuple(i -> min(a.high[i], b.high[i]), N))
@@ -102,6 +107,11 @@ end
         return res*ndims(a)
     end
 
+"""
+    overlap_area(a::Region, b::Region)
+
+The area of MBR for `a` and `b` intersection.
+"""
 @generated overlap_area(a::Rect{T,N}, b::Rect{T,N}) where {T,N} =
     quote
         @inbounds res = min(a.high[1], b.high[1]) - max(a.low[1], b.low[1])
@@ -114,6 +124,11 @@ end
         return res
     end
 
+"""
+    combined_area(a::Region, b::Region)
+
+The area of MBR for the union of `a` and `b`.
+"""
 @generated combined_area(a::Rect{T,N}, b::Rect{T,N}) where {T,N} =
     quote
         @inbounds res = max(a.high[1], b.high[1]) - min(a.low[1], b.low[1])
@@ -121,8 +136,20 @@ end
         return res
     end
 
+"""
+    enlargement(a::Region, b::Region)
+
+How much `a` grows when combined with `b`.
+
+The difference between the MBR area of the `a` and `b` union and the MBR area of `a`.
+"""
 enlargement(a::Rect{T,N}, b::Rect{T,N}) where {T,N} = combined_area(a, b) - area(a)
 
+"""
+    center(a::Region)
+
+The center point of `a`.
+"""
 center(a::Rect{T,N}) where {T,N} =
     Point(ntuple(i -> 0.5*(a.low[i] + a.high[i]), N))
 
@@ -134,7 +161,7 @@ center(a::Rect{T,N}) where {T,N} =
     end
 
 """
-    intersects(a::Region{T,N}, b::Region{T,N}) where {T,N}
+    intersects(a::Region, b::Region)
 
 Check whether `a` intersects with `b`.
 """
@@ -144,7 +171,7 @@ Check whether `a` intersects with `b`.
     end
 
 """
-    contains(a::Region{T,N}, b::Region{T,N}) where {T,N}
+    contains(a::Region, b::Region)
 
 Check whether `a` contains `b`.
 """
@@ -159,7 +186,7 @@ Check whether `a` contains `b`.
     end
 
 """
-    in(a::Region{T,N}, b::Region{T,N}) where {T,N}
+    in(a::Region, b::Region)
 
 Check whether `a` is contained inside `b`.
 """
@@ -171,9 +198,9 @@ Base.:(==)(a::Point, b::Rect) = a.coord == b.low == b.high
 Base.:(==)(a::Rect, b::Point) = b == a
 
 """
-    touches(a::Rect{T,N}, b::Rect{T,N}) where {T,N}
+    touches(a::Rect, b::Rect)
 
-Check whether `a` and `b` touch
+Check whether `a` and `b` rectangles touches from the inside
 (i.e. any `low` side touches `low` or `high` touches `high`).
 """
 @generated touches(a::Rect{T,N}, b::Rect{T,N}) where {T,N} =
