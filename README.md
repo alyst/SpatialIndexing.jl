@@ -4,6 +4,8 @@ SpatialIndexing.jl
 [![Build Status](https://github.com/alyst/SpatialIndexing.jl/workflows/CI/badge.svg)](https://github.com/alyst/SpatialIndexing.jl/actions?query=worflow%3ACI+branch%3Amaster)
 [![codecov](https://codecov.io/gh/alyst/SpatialIndexing.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/alyst/SpatialIndexing.jl)
 
+**Documentation**: [![][docs-stable-img]][docs-stable-url] [![][docs-latest-img]][docs-latest-url]
+
 `SpatialIndexing` package provides the tools for efficient in-memory indexing of
 spatial data in Julia (http://julialang.org/).
 
@@ -75,3 +77,9 @@ Other Julia packages for spatial data:
   Proc. 1990 ACM SIGMOD international conference on Management of data (1990), p.322
 * T. Lee and S. Lee, _"OMT: Overlap Minimizing Top-down Bulk Loading Algorithm for R-tree"_,
   CAiSE Short Paper Proceedings (2003) [paper](http://ceur-ws.org/Vol-74/files/FORUM_18.pdf)
+
+[docs-latest-img]: https://img.shields.io/badge/docs-latest-blue.svg
+[docs-latest-url]: http://alyst.github.io/SpatialIndexing.jl/latest/
+
+[docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
+[docs-stable-url]: http://alyst.github.io/SpatialIndexing.jl/stable/
