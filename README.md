@@ -79,7 +79,7 @@ Other Julia packages for spatial data:
   CAiSE Short Paper Proceedings (2003) [paper](http://ceur-ws.org/Vol-74/files/FORUM_18.pdf)
 
 [docs-latest-img]: https://img.shields.io/badge/docs-latest-blue.svg
-[docs-latest-url]: http://alyst.github.io/SpatialIndexing.jl/latest/
+[docs-latest-url]: http://alyst.github.io/SpatialIndexing.jl/dev/
 
 [docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
 [docs-stable-url]: http://alyst.github.io/SpatialIndexing.jl/stable/
