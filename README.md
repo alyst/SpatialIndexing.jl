@@ -7,7 +7,7 @@ SpatialIndexing.jl
 **Documentation**: [![][docs-stable-img]][docs-stable-url] [![][docs-latest-img]][docs-latest-url]
 
 `SpatialIndexing` package provides the tools for efficient in-memory indexing of
-spatial data in Julia (http://julialang.org/).
+spatial data in [Julia](https://julialang.org/).
 
 # Installation
 ```julia
