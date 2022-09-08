@@ -1,4 +1,4 @@
-function Base.show(io::IO, tree::RTree)
+function Base.show(io::IO, tree::RTree; recurse::Bool=false)
     print(io, typeof(tree))
     print(io, "(variant="); print(io, tree.variant)
     print(io, ", tight_mbrs="); print(io, tree.tight_mbrs)
@@ -11,7 +11,7 @@ function Base.show(io::IO, tree::RTree)
     print(io, ", branch_capacity="); print(io, capacity(Branch, tree)); println(io, ")")
     print(io, length(tree)); print(io, " element(s) in "); print(io, height(tree));
     print(io, " level(s) ("); print(io, join(reverse(tree.nnodes_perlevel), ", ")); println(io, " node(s) per level):")
-    _show(io, tree.root, recurse=true, indent=1)
+    _show(io, tree.root, recurse=recurse, indent=1)
 end
 
 function _show(io::IO, node::Node; recurse::Bool=false, indent::Int=0)
@@ -34,4 +34,8 @@ function _show(io::IO, node::Node; recurse::Bool=false, indent::Int=0)
             end
         end
     end
+end
+
+function Base.print(io::IO, tree::RTree;)
+    show(io, tree; recurse=true)    
 end

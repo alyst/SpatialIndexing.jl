@@ -345,4 +345,45 @@ end
     end
 end
 
+@testset "show() and print()" begin
+    mbrs = Vector{SI.Rect{Float64, 2}}(
+        [
+            SI.Rect((0.0, 0.0), (2.0, 2.0)),
+            SI.Rect((-1.0, -1.0), (1.0, 1.0)),
+            SI.Rect((-1.0, 0.0), (1.0, 1.0)),
+            SI.Rect((0.0, -1.0), (1.0, 1.0)),
+            SI.Rect((1.0, 1.0), (2.0, 2.0)),
+        ]
+    )
+    tree = RTree{SI.dimtype(eltype(mbrs)), ndims(eltype(mbrs))}(Int, String, leaf_capacity=4, branch_capacity=4)
+    for (i, rmbr) in enumerate(mbrs)
+        insert!(tree, rmbr, i, string(i))
+    end
+
+    eltyp = eltype(tree)
+    rectyp = eltype(mbrs)
+    test_show_string = "$(typeof(tree))(variant=RTreeStar, tight_mbrs=true, nearmin_overlap=1, fill_factor=0.7, split_factor=0.4, reinsert_factor=0.3, leaf_capacity=4, branch_capacity=4)
+5 element(s) in 2 level(s) (1, 2 node(s) per level):
+ level=2 nchildren=2 mbr=((-1.0, -1.0), (2.0, 2.0))"
+    test_print_string = "$(typeof(tree))(variant=RTreeStar, tight_mbrs=true, nearmin_overlap=1, fill_factor=0.7, split_factor=0.4, reinsert_factor=0.3, leaf_capacity=4, branch_capacity=4)
+5 element(s) in 2 level(s) (1, 2 node(s) per level):
+ level=2 nchildren=2 mbr=((-1.0, -1.0), (2.0, 2.0)):
+  level=1 nchildren=3 mbr=((-1.0, -1.0), (1.0, 1.0)):
+   $eltyp($rectyp((-1.0, -1.0), (1.0, 1.0)), 2, \"2\")
+   $eltyp($rectyp((-1.0, 0.0), (1.0, 1.0)), 3, \"3\")
+   $eltyp($rectyp((0.0, -1.0), (1.0, 1.0)), 4, \"4\")
+  level=1 nchildren=2 mbr=((0.0, 0.0), (2.0, 2.0)):
+   $eltyp($rectyp((0.0, 0.0), (2.0, 2.0)), 1, \"1\")
+   $eltyp($rectyp((1.0, 1.0), (2.0, 2.0)), 5, \"5\")"
+
+    io = IOBuffer()
+    show(io, tree)
+    @test String(take!(io)) == test_show_string
+    print(io, tree);
+    @test String(take!(io)) == test_print_string
+    show(io, tree; recurse=false)
+    @test String(take!(io)) == test_show_string
+    show(io, tree; recurse=true)
+    @test String(take!(io)) == test_print_string
+end
 end
