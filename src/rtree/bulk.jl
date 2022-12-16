@@ -1,7 +1,7 @@
 # default branch fill strategy
 # returns the tuple:
 # the number of 1st dim slices and the number of child nodes in each slice
-function omt_branch_fill(tree::RTree; fill_factor::Number=1.0) where T<:Node
+function omt_branch_fill(tree::RTree; fill_factor::Number=1.0)
     @assert 0.0 <= fill_factor <= 1.0
     maxlen = ceil(Int, capacity(Branch, tree) * fill_factor)
     slicelen = ceil(Int, 0.75*sqrt(maxlen))
