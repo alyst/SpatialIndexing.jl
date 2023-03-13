@@ -132,7 +132,7 @@ function _split!_rtree(node::Node, tree::RTree)
                 child_mbr = mbr(node[i])
                 enl1 = area(combine(mbr(n1), child_mbr)) - area1
                 enl2 = area(combine(mbr(n2), child_mbr)) - area2
-                enl_delta = abs(enl1 - enl2)
+                enl_diff = abs(enl1 - enl2)
 
                 if enl_diff > max_enl_diff
                     max_cost_diff = enl_diff
