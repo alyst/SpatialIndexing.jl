@@ -10,8 +10,9 @@
 end
 
 @testset "RTree" begin
+tree_vars = [SI.RTreeStar, SI.RTreeLinear, SI.RTreeQuadratic]
+
 @testset "Basic Operations" begin
-    tree_vars = [SI.RTreeStar, SI.RTreeLinear, SI.RTreeQuadratic]
     @testset "RTree{Float,2,Int32,Int}(variant=$tree_var)" for tree_var in tree_vars
         ambr = SI.Rect((0.0, 0.0), (0.0, 0.0))
         bmbr = SI.Rect((0.0, 1.0), (0.0, 1.0))
@@ -78,12 +79,17 @@ end
         @test insert!(tree, cmbr, 3, 3) === tree
         @test length(tree) == 3
         @test SI.check(tree)
-        @test length(collect(contained_in(tree, SI.Rect((0.0, 0.0), (1.0, 1.0))))) == 3
-        @test length(collect(intersects_with(tree, SI.Rect((0.0, 0.0), (1.0, 1.0))))) == 3
-        @test length(collect(contained_in(tree, SI.Rect((0.0, 0.0), (0.6, 0.6))))) == 2
-        @test length(collect(intersects_with(tree, SI.Rect((0.0, 0.0), (0.6, 0.6))))) == 2
-        @test length(collect(contained_in(tree, SI.Rect((0.0, 0.0), (0.55, 0.55))))) == 1 # a only
-        @test length(collect(intersects_with(tree, SI.Rect((0.0, 0.0), (0.55, 0.55))))) == 2 # a and c
+
+        a = (0.0, 0.0)
+        b = (0.55, 0.55)
+        c = (0.6, 0.6)
+        d = (1.0, 1.0)
+        @test length(collect(contained_in(tree, SI.Rect(a, d)))) == 3
+        @test length(collect(intersects_with(tree, SI.Rect(a, d)))) == 3
+        @test length(collect(contained_in(tree, SI.Rect(a, c)))) == 2
+        @test length(collect(intersects_with(tree, SI.Rect(a, c)))) == 2
+        @test length(collect(contained_in(tree, SI.Rect(a, b)))) == 1 # a only
+        @test length(collect(intersects_with(tree, SI.Rect(a, b)))) == 2 # a and c
 
         tree2 = similar(tree)
         @test typeof(tree2) === typeof(tree)
@@ -168,7 +174,7 @@ end
     end
 end
 
-@testset "1000 vertices" begin
+@testset "add 1000 vertices" begin
     # generate random point cloud
     Random.seed!(32123)
     mbrs = Vector{SI.Rect{Float64, 3}}()
@@ -179,8 +185,8 @@ end
         push!(mbrs, rmbr)
     end
 
-    @testset "sequential inserts" begin
-        tree = RTree{SI.dimtype(eltype(mbrs)), ndims(eltype(mbrs))}(Int, String, leaf_capacity = 20, branch_capacity = 20)
+    @testset "sequential inserts into RTree(variant=$tree_var)" for tree_var in tree_vars
+        tree = RTree{SI.dimtype(eltype(mbrs)), ndims(eltype(mbrs))}(Int, String, leaf_capacity = 20, branch_capacity = 20, variant=tree_var)
         @test tree isa RTree{Float64, 3, SpatialElem{Float64, 3, Int, String}}
         for (i, rmbr) in enumerate(mbrs)
             insert!(tree, rmbr, i, string(i))
@@ -223,9 +229,9 @@ end
         end
     end
 
-    @testset "load!() (OMT bulk load)" begin
+    @testset "load!(RTree(variant=$tree_var)) (OMT bulk load)" for tree_var in tree_vars
         tree = RTree{SI.dimtype(eltype(mbrs)), ndims(eltype(mbrs))}(Int, String,
-                                leaf_capacity = 20, branch_capacity = 20)
+                                leaf_capacity = 20, branch_capacity = 20, variant=tree_var)
         @test tree === SI.load!(tree, enumerate(mbrs), method=:OMT,
                                 convertel = x -> eltype(tree)(x[2], x[1], string(x[1])))
         @test SI.check(tree)
@@ -256,9 +262,9 @@ end
     end
 end
 
-@testset "subtract!()" begin
+@testset "subtract!(RTree(variant=$tree_var))" for tree_var in tree_vars
     @testset "simple" begin
-        tree = RTree{Int, 2}(Int, String, leaf_capacity = 5, branch_capacity = 5)
+        tree = RTree{Int, 2}(Int, String, leaf_capacity = 5, branch_capacity = 5, variant=tree_var)
         pts = [(0, 0), (1, 0), (2, 2), (2, 0), (0, 1), (1, 1), (-1, -1)]
         SI.load!(tree, enumerate(pts),
                  convertel = x -> eltype(tree)(SI.Rect(x[2], x[2]), x[1], string(x[1])))
@@ -280,7 +286,7 @@ end
         # generate random point cloud
         Random.seed!(32123)
         pts = [ntuple(_ -> 5. * randn(), 3) for _ in 1:1000]
-        tree = RTree{Float64, 3}(Int, String, leaf_capacity = 10, branch_capacity = 10)
+        tree = RTree{Float64, 3}(Int, String, leaf_capacity = 10, branch_capacity = 10, variant=tree_var)
         SI.load!(tree, enumerate(pts),
                  convertel = x -> eltype(tree)(SI.Rect(x[2], x[2]), x[1], string(x[1])))
         @test length(tree) == length(pts)
@@ -298,7 +304,7 @@ end
     @testset "subtract!() removing all but single point" begin
         Random.seed!(32123)
         pts = [ntuple(_ -> rand(), 2) for _ in 1:200]
-        reftree = RTree{Float64, 2}(Int, String, leaf_capacity = 5, branch_capacity = 5)
+        reftree = RTree{Float64, 2}(Int, String, leaf_capacity = 5, branch_capacity = 5, variant=tree_var)
         loner = eltype(reftree)(SI.Rect((5.0, 5.0), (5.0, 5.0)), 0, "loner")
         @testset "removing $n points" for (n, pt) in enumerate(pts)
             insert!(reftree, eltype(reftree)(SI.Rect(pt, pt), n, string(n)))
@@ -317,7 +323,7 @@ end
         pts = [ntuple(_ -> 2rand()-1, 3) for _ in 1:200]
         # the test implies that all pts have different distances to the origin
         sort!(pts, by = pt -> maximum(abs, pt))
-        reftree = RTree{Float64, 3}(Int, String, leaf_capacity = 5, branch_capacity = 5)
+        reftree = RTree{Float64, 3}(Int, String, leaf_capacity = 5, branch_capacity = 5, variant=tree_var)
         SI.load!(reftree, enumerate(pts),
                  convertel = x -> eltype(reftree)(SI.Rect(x[2], x[2]), x[1], string(x[1])))
         corembr = SI.Rect((0.0, 0.0, 0.0), (0.0, 0.0, 0.0))
