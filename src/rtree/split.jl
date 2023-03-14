@@ -124,8 +124,8 @@ function _split!_rtree(node::Node, tree::RTree)
             area1 = area(mbr(n1))
             area2 = area(mbr(n2))
 
-            max_cost_diff = -Inf
-            sel_cost1 = sel_cost2 = NaN
+            max_enl_diff = -Inf
+            sel_enl1 = sel_enl2 = NaN
             sel_child_ix = 0
             i = findfirst(available)
             while i !== nothing
@@ -135,7 +135,7 @@ function _split!_rtree(node::Node, tree::RTree)
                 enl_diff = abs(enl1 - enl2)
 
                 if enl_diff > max_enl_diff
-                    max_cost_diff = enl_diff
+                    max_enl_diff = enl_diff
                     sel_enl1 = enl1
                     sel_enl2 = enl2
                     sel_child_ix = i
