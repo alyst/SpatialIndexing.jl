@@ -17,6 +17,8 @@ children(node::Node) = node.children
 @inline Base.length(node::Node) = length(children(node))
 @inline Base.getindex(node::Node, i::Integer) = getindex(children(node), i)
 
+Base.keys(node::Node) = keys(children(node)) # for eachindex()
+
 # `node` position among its siblings in `children` vector of the parent or nothing
 pos_in_parent(node::Node) =
     hasparent(node) ? findfirst(c -> c === node, children(parent(node))) : nothing
