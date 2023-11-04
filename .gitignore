@@ -1,2 +1,5 @@
 docs/build
+examples/pareto3d_rtree_seq.html
+examples/pareto3d_rtree_bulk.html
 Manifest.toml
+!examples/Manifest.toml

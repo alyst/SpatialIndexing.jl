@@ -1,21 +1,20 @@
-using Revise
-using Random, DataFrames, PlotlyJS, SpatialIndexing
+using Random, DataFrames, PlotlyJS, SpatialIndexing, StableRNGs
 using Printf: @sprintf
 
 const SI = SpatialIndexing
 
-Random.seed!(1)
-pts = Vector{SI.Point{Float64, 3}}()
+rng = StableRNG(1)
+pts = Vector{SI.Point{Float64,3}}()
 for i in 1:100000
-    r = 1 - 1/(1+abs(randn()))
-    a = rand()*pi/2
-    b = rand()*pi/2
+    r = 1 - 1 / (1 + abs(randn(rng)))
+    a = rand(rng) * pi / 2
+    b = rand(rng) * pi / 2
     x = (sin(a) * cos(b))^3 * r
     y = (cos(a) * cos(b))^3 * r
     z = (sin(b))^3 * r
     push!(pts, SI.Point((x, y, z)))
 end
-seq_tree = RTree{Float64, 3}(Int, String, leaf_capacity = 20, branch_capacity = 20)
+seq_tree = RTree{Float64,3}(Int, String, leaf_capacity=20, branch_capacity=20)
 for (i, pt) in enumerate(pts)
     insert!(seq_tree, pt, i, string(i))
 end
@@ -44,7 +43,7 @@ function pareto_insert!(tree::RTree{T,N}, pt::SI.Point{T,N}, key, val) where {T,
     insert!(tree, pt, key, val)
 end
 
-pareto_tree = RTree{Float64, 3}(Int, String, leaf_capacity = 8, branch_capacity = 8)
+pareto_tree = RTree{Float64,3}(Int, String, leaf_capacity=8, branch_capacity=8)
 for (i, pt) in enumerate(pts)
     pareto_insert!(pareto_tree, pt, i, string(i))
 end
@@ -57,7 +56,7 @@ open(joinpath(@__DIR__, "pareto3d_rtree_seq.html"), "w") do io
     PlotlyJS.savehtml(io, pareto_tree_plot, :embed)
 end
 
-bulk_pareto_tree = RTree{Float64, 3}(Int, String, leaf_capacity = 8, branch_capacity = 8)
+bulk_pareto_tree = RTree{Float64,3}(Int, String, leaf_capacity=8, branch_capacity=8)
 SI.load!(bulk_pareto_tree, pareto_tree)
 SI.check(bulk_pareto_tree)
 
@@ -66,5 +65,8 @@ open(joinpath(@__DIR__, "pareto3d_rtree_bulk.html"), "w") do io
     PlotlyJS.savehtml(io, bulk_pareto_tree_plot, :embed)
 end
 
-using ORCA
-savefig(bulk_pareto_tree_plot, joinpath(@__DIR__, "pareto3d_rtree_bulk.png"), width=900, height=1000)
+try
+    using ORCA
+    savefig(bulk_pareto_tree_plot, joinpath(@__DIR__, "pareto3d_rtree_bulk.png"), width=900, height=1000)
+catch
+end # not available on all systems
