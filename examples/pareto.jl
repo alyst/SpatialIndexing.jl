@@ -53,7 +53,7 @@ include(joinpath(@__DIR__, "plot_utils.jl"))
 
 pareto_tree_plot = plot(pareto_tree);
 open(joinpath(@__DIR__, "pareto3d_rtree_seq.html"), "w") do io
-    PlotlyJS.savehtml(io, pareto_tree_plot, :embed)
+    PlotlyBase.to_html(io, pareto_tree_plot.plot)
 end
 
 bulk_pareto_tree = RTree{Float64,3}(Int, String, leaf_capacity=8, branch_capacity=8)
@@ -62,11 +62,11 @@ SI.check(bulk_pareto_tree)
 
 bulk_pareto_tree_plot = plot(bulk_pareto_tree);
 open(joinpath(@__DIR__, "pareto3d_rtree_bulk.html"), "w") do io
-    PlotlyJS.savehtml(io, bulk_pareto_tree_plot, :embed)
+    PlotlyBase.to_html(io, bulk_pareto_tree_plot.plot)
 end
 
 try
-    using ORCA
-    savefig(bulk_pareto_tree_plot, joinpath(@__DIR__, "pareto3d_rtree_bulk.png"), width=900, height=1000)
+    savefig(bulk_pareto_tree_plot, joinpath(@__DIR__, "_pareto3d_rtree_bulk.png"), width=900, height=1000)
+    savefig(bulk_pareto_tree_plot, joinpath(@__DIR__, "pareto3d_rtree_bulk.png"), width=900, height=1000) # don't overwrite on failure
 catch
 end # not available on all systems

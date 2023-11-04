@@ -3,6 +3,8 @@ using Test, Random
 
 const SI = SpatialIndexing
 
-include("regions.jl")
-include("rtree.jl")
-include("examples.jl")
+@testset "SpatialIndexing" begin
+    include("regions.jl")
+    include("rtree.jl")
+    include("examples.jl")
+end
