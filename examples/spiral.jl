@@ -29,8 +29,8 @@ seq_tree_df = convert(DataFrame, seq_tree)
 include(joinpath(@__DIR__, "plot_utils.jl"))
 
 seq_tree_plot = plot(seq_tree);
-PlotlyJS.savefig(seq_tree_plot, joinpath(@__DIR__, "spiral_rtree_seq.html"), width=1000, height=800)
+PlotlyJS.savefig(seq_tree_plot, joinpath(@__DIR__, "spiral_rtree_seq.html"))
 PlotlyJS.savefig(seq_tree_plot, joinpath(@__DIR__, "spiral_rtree_seq.png"), width=1000, height=800)
 
 bulk_tree_plot = plot(bulk_tree);
-PlotlyJS.savefig(bulk_tree_plot, joinpath(@__DIR__, "spiral_rtree_bulk.html"), width=1000, height=800)
+PlotlyJS.savefig(bulk_tree_plot, joinpath(@__DIR__, "spiral_rtree_bulk.html"))

@@ -52,14 +52,12 @@ SI.check(pareto_tree)
 include(joinpath(@__DIR__, "plot_utils.jl"))
 
 pareto_tree_plot = plot(pareto_tree);
-open(joinpath(@__DIR__, "pareto3d_rtree_seq.html"), "w") do io
-    PlotlyBase.to_html(io, pareto_tree_plot.plot)
-end
+savefig(pareto_tree_plot, joinpath(@__DIR__, "pareto3d_rtree_seq.html"))
 
 bulk_pareto_tree = RTree{Float64,3}(Int, String, leaf_capacity=8, branch_capacity=8)
 SI.load!(bulk_pareto_tree, pareto_tree)
 SI.check(bulk_pareto_tree)
 
 bulk_pareto_tree_plot = plot(bulk_pareto_tree);
-savefig(bulk_pareto_tree_plot, joinpath(@__DIR__, "pareto3d_rtree_bulk.html"), width=900, height=1000) 
+savefig(bulk_pareto_tree_plot, joinpath(@__DIR__, "pareto3d_rtree_bulk.html")) 
 savefig(bulk_pareto_tree_plot, joinpath(@__DIR__, "pareto3d_rtree_bulk.png"), width=900, height=1000) 
