@@ -33,11 +33,7 @@ open(joinpath(@__DIR__, "spiral_rtree_seq.html"), "w") do io
     PlotlyBase.to_html(io, seq_tree_plot.plot)
 end
 
-try
-    PlotlyJS.savefig(seq_tree_plot, joinpath(@__DIR__, "_spiral_rtree_seq.png"), width=1000, height=800) # don't overwrite on failure
-    PlotlyJS.savefig(seq_tree_plot, joinpath(@__DIR__, "spiral_rtree_seq.png"), width=1000, height=800)
-catch
-end 
+PlotlyJS.savefig(seq_tree_plot, joinpath(@__DIR__, "spiral_rtree_seq.png"), width=1000, height=800)
 
 bulk_tree_plot = plot(bulk_tree);
 open(joinpath(@__DIR__, "spiral_rtree_bulk.html"), "w") do io
