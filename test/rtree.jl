@@ -368,9 +368,20 @@ end
 
     eltyp = eltype(tree)
     rectyp = eltype(mbrs)
-    test_show_string = "$(typeof(tree))(variant=RTreeStar, tight_mbrs=true, nearmin_overlap=1, fill_factor=0.7, split_factor=0.4, reinsert_factor=0.3, leaf_capacity=4, branch_capacity=4)\n5 element(s) in 2 level(s) (1, 2 node(s) per level):\n level=2 nchildren=2 mbr=((-1.0, -1.0), (2.0, 2.0))"
-    test_print_string = "$(typeof(tree))(variant=RTreeStar, tight_mbrs=true, nearmin_overlap=1, fill_factor=0.7, split_factor=0.4, reinsert_factor=0.3, leaf_capacity=4, branch_capacity=4)\n5 element(s) in 2 level(s) (1, 2 node(s) per level):\n level=2 nchildren=2 mbr=((-1.0, -1.0), (2.0, 2.0)):\n  level=1 nchildren=3 mbr=((-1.0, -1.0), (1.0, 1.0)):\n   $eltyp($rectyp((-1.0, -1.0), (1.0, 1.0)), 2, \"2\")\n   $eltyp($rectyp((-1.0, 0.0), (1.0, 1.0)), 3, \"3\")\n   $eltyp($rectyp((0.0, -1.0), (1.0, 1.0)), 4, \"4\")\n  level=1 nchildren=2 mbr=((0.0, 0.0), (2.0, 2.0)):\n   $eltyp($rectyp((0.0, 0.0), (2.0, 2.0)), 1, \"1\")\n   $eltyp($rectyp((1.0, 1.0), (2.0, 2.0)), 5, \"5\")"
-
+    test_show_string = "$(typeof(tree))(variant=RTreeStar, tight_mbrs=true, nearmin_overlap=1, fill_factor=0.7, split_factor=0.4, reinsert_factor=0.3, leaf_capacity=4, branch_capacity=4)
+5 element(s) in 2 level(s) (1, 2 node(s) per level):
+ level=2 nchildren=2 mbr=((-1.0, -1.0), (2.0, 2.0))"
+    test_print_string = "$(typeof(tree))(variant=RTreeStar, tight_mbrs=true, nearmin_overlap=1, fill_factor=0.7, split_factor=0.4, reinsert_factor=0.3, leaf_capacity=4, branch_capacity=4)
+5 element(s) in 2 level(s) (1, 2 node(s) per level):
+ level=2 nchildren=2 mbr=((-1.0, -1.0), (2.0, 2.0)):
+  level=1 nchildren=3 mbr=((-1.0, -1.0), (1.0, 1.0)):
+   $eltyp($rectyp((-1.0, -1.0), (1.0, 1.0)), 2, \"2\")
+   $eltyp($rectyp((-1.0, 0.0), (1.0, 1.0)), 3, \"3\")
+   $eltyp($rectyp((0.0, -1.0), (1.0, 1.0)), 4, \"4\")
+  level=1 nchildren=2 mbr=((0.0, 0.0), (2.0, 2.0)):
+   $eltyp($rectyp((0.0, 0.0), (2.0, 2.0)), 1, \"1\")
+   $eltyp($rectyp((1.0, 1.0), (2.0, 2.0)), 5, \"5\")"
+   
     io = IOBuffer()
     show(io, tree)
     @test String(take!(io)) == test_show_string
