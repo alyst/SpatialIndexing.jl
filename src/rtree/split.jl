@@ -81,7 +81,7 @@ end
 # pick the two seeds (children indices) for splitting the node into two
 function _splitseeds(node::Node, tree::RTree)
     length(node) > 1 ||
-        throw(SpatialIndexError("Cannot split the node with less than 2 children"))
+        throw(SpatialIndexException("Cannot split the node with less than 2 children"))
 
     if variant(tree) == RTreeLinear || variant(tree) == RTreeStar
         return _splitseeds_linear(node)
@@ -245,6 +245,6 @@ function _split!(node::Node, tree::RTree)
     elseif variant(tree) == RTreeStar
         return _split!_rstar(node, tree)
     else
-        throw(SpatialIndexError("RTree variant not supported"))
+        throw(SpatialIndexException("RTree variant not supported"))
     end
 end

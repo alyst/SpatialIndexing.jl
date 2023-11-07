@@ -36,13 +36,13 @@ function _condense!(node::Node, tree::RTree, tmpdetached::AbstractVector{<:Node}
         if length(node) < min_load
             # used space less than the minimum
             # 1. eliminate node entry from the parent. deleteEntry will fix the parent's MBR.
-            _detach!(parent, node_ix, tree)
+            _detach!(parent(node), node_ix, tree)
             # 2. add this node to the stack in order to reinsert its entries.
             push!(tmpdetached, node)
         else
             # global recalculation necessary since the MBR can only shrink in size,
             # due to data removal.
-            tree.tight_mbrs && syncmbr(parent(node))
+            tree.tight_mbrs && syncmbr!(parent(node))
         end
 
         return _condense!(parent(node), tree, tmpdetached)
@@ -84,7 +84,7 @@ function _updatembr!(node::Branch, child_ix::Integer, child_oldmbr::Rect,
     mbr_dirty && syncmbr!(node)
 
     if mbr_dirty && hasparent(node)
-        _updatembr!(parent(node), pos_in_parent(node), node_oldmbr, con, force=force)
+        _updatembr!(parent(node)::Branch, pos_in_parent(node), node_oldmbr, con, force=force)
     end
     return mbr_dirty
 end
