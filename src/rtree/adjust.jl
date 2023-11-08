@@ -84,7 +84,7 @@ function _updatembr!(node::Branch, child_ix::Integer, child_oldmbr::Rect,
     mbr_dirty && syncmbr!(node)
 
     if mbr_dirty && hasparent(node)
-        _updatembr!(parent(node)::Branch, pos_in_parent(node), node_oldmbr, con, force=force)
+        _updatembr!(parent(node), pos_in_parent(node), node_oldmbr, con, force=force)
     end
     return mbr_dirty
 end
